@@ -1272,16 +1272,16 @@ function getPos(e) {
   return { x: src.clientX - rect.left, y: src.clientY - rect.top };
 }
 
-canvas.addEventListener('pointerdown', e => {
+function startDraw(e) {
   e.preventDefault();
   drawing = true;
   const p = getPos(e);
   lastX = p.x; lastY = p.y;
   ctx.beginPath();
   ctx.moveTo(lastX, lastY);
-});
+}
 
-canvas.addEventListener('pointermove', e => {
+function moveDraw(e) {
   if (!drawing) return;
   e.preventDefault();
   const p = getPos(e);
@@ -1295,10 +1295,21 @@ canvas.addEventListener('pointermove', e => {
     canvas.classList.add('has-sig');
     updateSubmitBtn();
   }
-});
+}
 
-canvas.addEventListener('pointerup',     () => { drawing = false; ctx.beginPath(); });
-canvas.addEventListener('pointercancel', () => { drawing = false; ctx.beginPath(); });
+function endDraw() { drawing = false; ctx.beginPath(); }
+
+// Touch events — iOS Safari
+canvas.addEventListener('touchstart',  startDraw, { passive: false });
+canvas.addEventListener('touchmove',   moveDraw,  { passive: false });
+canvas.addEventListener('touchend',    endDraw,   { passive: true  });
+canvas.addEventListener('touchcancel', endDraw,   { passive: true  });
+
+// Mouse events — desktop fallback
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mousemove', moveDraw);
+canvas.addEventListener('mouseup',   endDraw);
+canvas.addEventListener('mouseleave',endDraw);
 
 function clearCanvas() {
   const dpr = window.devicePixelRatio || 1;
