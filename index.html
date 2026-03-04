@@ -1344,17 +1344,19 @@ document.getElementById('btn-submit').addEventListener('click', async () => {
     hour: 'numeric', minute: '2-digit', timeZoneName: 'short'
   });
 
-  // Compress signature: draw current canvas onto a small offscreen canvas,
-  // export as JPEG at 60% quality — keeps base64 string well under EmailJS's 50kb variable limit.
+  // Compress signature: draw onto small offscreen canvas at 300x90, JPEG 50%
+  // Keeps base64 string safely under EmailJS's 50kb variable limit on retina displays
   const offscreen = document.createElement('canvas');
-  offscreen.width  = 400;
-  offscreen.height = 120;
+  offscreen.width  = 300;
+  offscreen.height = 90;
   const offCtx = offscreen.getContext('2d');
   offCtx.fillStyle = '#ffffff';
-  offCtx.fillRect(0, 0, 400, 120);
-  offCtx.drawImage(canvas, 0, 0, 400, 120);
-  const sigDataURL     = offscreen.toDataURL('image/jpeg', 0.6);
-  const sigImgTag      = `<img src="${sigDataURL}" alt="Guest signature" style="max-width:100%; display:block;">`;
+  offCtx.fillRect(0, 0, 300, 90);
+  // Draw from logical (CSS) dimensions, not physical pixel dimensions
+  const dpr = window.devicePixelRatio || 1;
+  offCtx.drawImage(canvas, 0, 0, canvas.width / dpr * dpr, canvas.height / dpr * dpr, 0, 0, 300, 90);
+  const sigDataURL  = offscreen.toDataURL('image/jpeg', 0.5);
+  const sigImgTag   = `<img src="${sigDataURL}" alt="Guest signature" style="max-width:100%; display:block;">`;
 
   // Log entry
   const entry = { guestName, timestamp, emailStatus: 'sending' };
@@ -1392,7 +1394,8 @@ document.getElementById('btn-submit').addEventListener('click', async () => {
     entry.emailStatus    = 'sent';
   } catch (err) {
     console.error('EmailJS error:', err);
-    statusEl.textContent = '⚠ Email failed — screenshot the log';
+    const msg = err?.text || err?.message || JSON.stringify(err) || 'Unknown error';
+    statusEl.textContent = `⚠ Email failed: ${msg}`;
     statusEl.className   = 'confirm-email-status failed';
     entry.emailStatus    = 'failed';
   }
