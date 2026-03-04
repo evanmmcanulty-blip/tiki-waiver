@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Tiki House — Guest Waiver</title>
+<script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
+<script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
+<style>
+  /* ─── RESET & BASE ─────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ─── PIKADAY OVERRIDES ─────────────────────────────────────── */
+  .pika-single {
+    font-family: 'Georgia', serif;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    box-shadow: none;
+    width: 100%;
+    background: var(--surface);
+  }
+  .pika-single.is-bound { display: none; } /* only inline */
+  .pika-lendar { width: 100%; float: none; }
+  .pika-title { padding: 8px 12px; }
+  .pika-title select { font-family: 'Georgia', serif; font-size: 14px; }
+  .pika-prev, .pika-next {
+    background: none;
+    opacity: 0.5;
+    font-size: 18px;
+    width: 30px; height: 30px;
+    text-indent: 0;
+    overflow: visible;
+    color: var(--ink);
+  }
+  .pika-prev::after  { content: '‹'; }
+  .pika-next::after  { content: '›'; }
+  .pika-table th { font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--ink-light); }
+  .pika-button {
+    font-family: 'Georgia', serif;
+    font-size: 14px;
+    border-radius: 4px;
+    text-align: center;
+    background: transparent;
+    color: var(--ink);
+  }
+  .pika-button:hover, .pika-button:focus { background: var(--bg) !important; color: var(--ink) !important; }
+  .is-selected .pika-button { background: var(--ink) !important; color: #fff !important; border-radius: 4px; }
+  .is-today .pika-button { color: var(--ink); font-weight: bold; }
+  .is-disabled .pika-button { color: var(--rule); cursor: not-allowed; }
+
+  /* date picker wrapper */
+  .date-picker-wrap { display: flex; flex-direction: column; gap: 4px; }
+  .date-picker-wrap label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-light);
+  }
+  #departure-wrap { display: none; }
+  #date-summary {
+    display: none;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  /* validation shake */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%       { transform: translateX(-6px); }
+    40%       { transform: translateX(6px); }
+    60%       { transform: translateX(-4px); }
+    80%       { transform: translateX(4px); }
+  }
+  .field-error input, .field-error .pika-single {
+    border-color: var(--danger) !important;
+  }
+  .field-error { animation: shake 0.4s ease; }
+
+  :root {
+    --ink:       #1a1a1a;
+    --ink-light: #4a4a4a;
+    --rule:      #d0cec9;
+    --bg:        #f5f3ef;
+    --surface:   #ffffff;
+    --accent:    #1a1a1a;
+    --danger:    #c0392b;
+    --success:   #2d6a4f;
+    --radius:    6px;
+    --mono:      'Courier New', Courier, monospace;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+
+  /* ─── SCREEN MANAGER ────────────────────────────────────────── */
+  .screen { display: none; min-height: 100vh; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* ─── KIOSK HEADER ──────────────────────────────────────────── */
+  .kiosk-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--rule);
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .kiosk-header .wordmark {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-light);
+  }
+  .kiosk-header .doc-title {
+    font-size: 14px;
+    font-weight: normal;
+    letter-spacing: 0.03em;
+    color: var(--ink);
+  }
+  .step-indicator {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .step-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--rule);
+    transition: background 0.3s;
+  }
+  .step-dot.active { background: var(--ink); }
+  .step-dot.done { background: var(--ink-light); }
+
+  /* ─── WELCOME SCREEN ────────────────────────────────────────── */
+  #screen-welcome {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 48px 32px;
+    gap: 32px;
+  }
+  .welcome-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-light);
+  }
+  .welcome-title {
+    font-size: 38px;
+    font-weight: normal;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    max-width: 520px;
+  }
+  .welcome-sub {
+    font-size: 16px;
+    color: var(--ink-light);
+    max-width: 440px;
+    line-height: 1.6;
+  }
+  .welcome-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    padding: 20px 28px;
+    width: 100%;
+    max-width: 480px;
+    text-align: left;
+  }
+  .welcome-meta label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    margin-bottom: 2px;
+  }
+  .welcome-meta input, .welcome-meta select {
+    font-family: 'Georgia', serif;
+    font-size: 16px;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--rule);
+    padding: 6px 0;
+    width: 100%;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  .welcome-meta input:focus, .welcome-meta select:focus {
+    border-bottom-color: var(--ink);
+  }
+  .field-row { display: flex; flex-direction: column; gap: 4px; }
+  .field-row + .field-row { margin-top: 14px; }
+
+  /* ─── WAIVER SCROLL SCREEN ──────────────────────────────────── */
+  #screen-waiver {
+    flex-direction: column;
+  }
+  .waiver-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 28px 24px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .waiver-doc {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  .waiver-doc h1 {
+    font-size: 24px;
+    font-weight: normal;
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .waiver-doc .doc-org {
+    font-size: 14px;
+    color: var(--ink-light);
+    margin-bottom: 12px;
+  }
+  .waiver-doc hr {
+    border: none;
+    border-top: 1px solid var(--ink);
+    width: 40%;
+    margin: 0 0 16px 0;
+  }
+  .waiver-doc .doc-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-light);
+    margin-bottom: 2px;
+  }
+  .waiver-doc .intro {
+    margin: 20px 0;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--ink-light);
+    font-style: italic;
+  }
+  .waiver-section {
+    margin-bottom: 22px;
+  }
+  .waiver-section h2 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .waiver-section .def-term {
+    font-size: 13.5px;
+    line-height: 1.6;
+    margin-bottom: 7px;
+    color: var(--ink);
+  }
+  .waiver-section .def-term b { font-style: normal; }
+  .waiver-section ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .waiver-section ul li {
+    font-size: 13.5px;
+    line-height: 1.6;
+    padding-left: 18px;
+    position: relative;
+    color: var(--ink);
+  }
+  .waiver-section ul li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--ink-light);
+    font-size: 12px;
+  }
+  .waiver-section ul.sub-list li::before { content: '·'; }
+  .waiver-section p {
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: var(--ink);
+  }
+  .waiver-section.highlight {
+    background: var(--ink);
+    color: var(--bg);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+  }
+  .waiver-section.highlight h2 {
+    color: #aaa;
+    border-bottom-color: #444;
+  }
+  .waiver-section.highlight ul li,
+  .waiver-section.highlight p { color: var(--bg); }
+  .waiver-section.highlight ul li::before { color: #888; }
+
+  .scroll-nudge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 28px;
+    background: var(--bg);
+    border-top: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--ink-light);
+    text-transform: uppercase;
+    flex-shrink: 0;
+    transition: opacity 0.4s;
+  }
+  .scroll-nudge.hidden { opacity: 0; pointer-events: none; }
+  .scroll-nudge svg { animation: bounce 1.4s ease-in-out infinite; }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(4px); }
+  }
+
+  .waiver-footer-bar {
+    padding: 16px 28px;
+    background: var(--surface);
+    border-top: 1px solid var(--rule);
+    flex-shrink: 0;
+  }
+
+  /* ─── SIGN SCREEN ───────────────────────────────────────────── */
+  #screen-sign {
+    justify-content: flex-start;
+  }
+  .sign-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 28px;
+    gap: 24px;
+    overflow-y: auto;
+    max-width: 680px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .sign-body h2 {
+    font-size: 22px;
+    font-weight: normal;
+    letter-spacing: -0.01em;
+  }
+  .sign-body .sign-subhead {
+    font-size: 14px;
+    color: var(--ink-light);
+    line-height: 1.55;
+    margin-top: -14px;
+  }
+  .name-field-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .name-field-wrap label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-light);
+  }
+  .name-field-wrap input {
+    font-family: 'Georgia', serif;
+    font-size: 22px;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--ink);
+    padding: 8px 0;
+    width: 100%;
+    outline: none;
+  }
+  .sig-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .sig-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .sig-clear {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+  }
+  canvas#sig-canvas {
+    width: 100%;
+    height: 180px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    touch-action: none;
+    cursor: crosshair;
+    display: block;
+  }
+  canvas#sig-canvas.has-sig { border-color: var(--ink); }
+  .consent-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .consent-row input[type=checkbox] {
+    width: 20px; height: 20px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    cursor: pointer;
+    accent-color: var(--ink);
+  }
+  .consent-row p {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--ink-light);
+  }
+
+  /* ─── CONFIRMATION SCREEN ───────────────────────────────────── */
+  #screen-confirm {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 48px 32px;
+    gap: 24px;
+  }
+  .confirm-icon {
+    width: 64px; height: 64px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+  }
+  .confirm-title {
+    font-size: 32px;
+    font-weight: normal;
+    letter-spacing: -0.01em;
+  }
+  .confirm-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    color: var(--ink-light);
+  }
+  .confirm-timestamp {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-light);
+  }
+  .confirm-email-status {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--rule);
+    color: var(--ink-light);
+  }
+  .confirm-email-status.sending { color: var(--ink-light); }
+  .confirm-email-status.sent { color: var(--success); border-color: var(--success); }
+  .confirm-email-status.failed { color: var(--danger); border-color: var(--danger); }
+
+  /* ─── LOG SCREEN ────────────────────────────────────────────── */
+  #screen-log {
+    flex-direction: column;
+  }
+  .log-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+  }
+  .log-title {
+    font-size: 20px;
+    font-weight: normal;
+    margin-bottom: 20px;
+  }
+  .log-entry {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .log-entry:first-of-type { border-top: 1px solid var(--rule); }
+  .log-entry-name { font-size: 16px; }
+  .log-entry-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-light);
+    margin-top: 3px;
+  }
+  .log-entry-status {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--rule);
+    color: var(--ink-light);
+  }
+  .log-entry-status.sent { color: var(--success); border-color: var(--success); }
+  .log-empty {
+    font-size: 14px;
+    color: var(--ink-light);
+    text-align: center;
+    padding: 48px 0;
+    font-style: italic;
+  }
+
+  /* ─── BUTTONS ───────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 28px;
+    border-radius: var(--radius);
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.2s, background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    width: 100%;
+  }
+  .btn-primary {
+    background: var(--ink);
+    color: #fff;
+  }
+  .btn-primary:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  .btn-secondary {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--rule);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink-light);
+    font-size: 11px;
+    padding: 10px 16px;
+    width: auto;
+  }
+  .btn-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .btn-row-h {
+    display: flex;
+    gap: 10px;
+  }
+  .btn-row-h .btn { width: auto; flex: 1; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 0 — WELCOME / SESSION SETUP
+════════════════════════════════════════════════════════════ -->
+<div id="screen-welcome" class="screen active">
+  <div class="kiosk-header">
+    <span class="doc-title">Welcome to the Tiki House</span>
+  </div>
+
+  <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:48px 28px; gap:28px; text-align:center;">
+    <h1 class="welcome-title">Tiki House<br>Guest Check-In</h1>
+    <p class="welcome-sub">Each guest must review and sign before entering the Property. This takes about two minutes.</p>
+
+    <div class="welcome-meta">
+      <div class="field-row" id="host-field-row">
+        <label>Approved User (Host)</label>
+        <input type="text" id="host-name" placeholder="Full name of host" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div class="field-row" style="margin-top:18px;">
+        <div class="date-picker-wrap">
+          <label>Arrival Date</label>
+          <div id="arrival-cal"></div>
+        </div>
+        <div class="date-picker-wrap" id="departure-wrap">
+          <label style="margin-top:14px; display:block;">Departure Date</label>
+          <div id="departure-cal"></div>
+        </div>
+        <div id="date-summary"></div>
+      </div>
+    </div>
+
+    <div class="btn-row" style="max-width:480px; width:100%;">
+      <button class="btn btn-primary" id="btn-start">Begin Waiver →</button>
+      <button class="btn btn-ghost" id="btn-view-log">View Signed Log</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 1 — WAIVER TEXT
+════════════════════════════════════════════════════════════ -->
+<div id="screen-waiver" class="screen">
+  <div class="kiosk-header">
+    <span class="wordmark">All-Pro Auto Reconditioning</span>
+    <div class="step-indicator">
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+      <div class="step-dot"></div>
+    </div>
+  </div>
+
+  <div class="waiver-scroll-area" id="waiver-scroll">
+    <div class="waiver-doc">
+      <h1>Tiki House<br>Guest Waiver Form</h1>
+      <p class="doc-org">All-Pro Auto Reconditioning</p>
+      <hr>
+      <p class="doc-meta">Property Owner: All-Pro Auto Reconditioning, LLC</p>
+      <p class="doc-meta">Property Name: Tiki House</p>
+      <p class="doc-meta">Form Type: Guest Liability Waiver &amp; Acknowledgment</p>
+      <p class="intro">This Guest Waiver Form ("Waiver") shall be executed by each Guest prior to entering the Property. By signing below, the Guest acknowledges and agrees to all terms set forth herein as a condition of access.</p>
+
+      <!-- DEFINED TERMS -->
+      <div class="waiver-section">
+        <h2>Defined Terms</h2>
+        <p style="margin-bottom:10px; font-size:13.5px; line-height:1.6; color:var(--ink-light);">As used in this Waiver, the following terms shall have the meanings set forth below:</p>
+        <div class="def-term"><b>"Approved User"</b> means the individual authorized by Ownership to use the Property for the stay during which this Waiver is executed.</div>
+        <div class="def-term"><b>"Company"</b> means All-Pro Auto Reconditioning, LLC.</div>
+        <div class="def-term"><b>"Guest"</b> means the individual executing this Waiver, who is accessing the Property as a visitor in the company of an Approved User.</div>
+        <div class="def-term"><b>"Ownership"</b> means the principals and executive leadership of the Company.</div>
+        <div class="def-term"><b>"Pet"</b> means any animal brought to the Property by the Approved User or a Guest.</div>
+        <div class="def-term"><b>"Property"</b> means the Company-owned residential property known as the Tiki House.</div>
+        <div class="def-term"><b>"Use Policy"</b> means the Tiki House Use Policy &amp; Agreement, the governing document applicable to Approved Users, to which this Waiver is a companion.</div>
+        <div class="def-term"><b>"Watercraft"</b> means any boat, personal watercraft, kayak, paddleboard, or other vessel associated with or accessible through the Property.</div>
+        <div class="def-term"><b>"Waiver"</b> means this Tiki House Guest Waiver Form in its entirety.</div>
+      </div>
+
+      <!-- 1 -->
+      <div class="waiver-section">
+        <h2>1. Guest Acknowledgment</h2>
+        <ul>
+          <li>The Guest is accessing the Property solely as a visitor accompanying an Approved User and has no independent right of access.</li>
+          <li>The Guest understands that the Property is a Company-owned asset and that all access is a privilege subject to the Use Policy and this Waiver.</li>
+          <li>The Guest agrees to conduct themselves in a manner consistent with the Use Policy and to follow all reasonable directions of the Approved User and Ownership.</li>
+        </ul>
+      </div>
+
+      <!-- 2 -->
+      <div class="waiver-section">
+        <h2>2. Property Rules &amp; Care Standards</h2>
+        <p style="margin-bottom:8px; font-size:13.5px;">As a condition of access, the Guest shall comply with the following rules at all times:</p>
+        <ul>
+          <li>No glitter, confetti, beads, or similar materials anywhere on the Property.</li>
+          <li>No taping, pinning, nailing, or fastening anything to walls, ceilings, doors, furniture, or fixtures.</li>
+          <li>No food shall be left behind in any area of the Property, including the refrigerator, counters, or exterior spaces.</li>
+          <li>No personal belongings shall be left behind upon departure.</li>
+          <li>No furniture shall be rearranged or the layout of the Property altered.</li>
+          <li>No permanent or semi-permanent modifications to the Property are permitted.</li>
+          <li>The Master Bedroom shall not be used unless Ownership has granted written approval for that specific stay.</li>
+        </ul>
+      </div>
+
+      <!-- 3 -->
+      <div class="waiver-section">
+        <h2>3. Prohibited Uses</h2>
+        <p style="margin-bottom:8px; font-size:13.5px;">The following are strictly prohibited without exception:</p>
+        <ul>
+          <li>Parties or events exceeding 20 persons in total.</li>
+          <li>Commercial activities of any kind.</li>
+          <li>Inviting or admitting individuals not authorized by Ownership.</li>
+          <li>Any activity that creates excessive liability risk, noise complaints after 11PM, or undue exposure of the Property.</li>
+        </ul>
+      </div>
+
+      <!-- 4 -->
+      <div class="waiver-section">
+        <h2>4. Smoking Policy</h2>
+        <ul>
+          <li>Smoking of any kind is strictly prohibited inside the Property at all times, including cigarettes, cigars, vapes, e-cigarettes, and cannabis products.</li>
+          <li>Smoking is permitted only in designated outdoor areas. All materials shall be fully extinguished and deposited in proper receptacles.</li>
+          <li>Any evidence of indoor smoking shall result in charges and remediation costs billed through the Approved User.</li>
+        </ul>
+      </div>
+
+      <!-- 5 -->
+      <div class="waiver-section">
+        <h2>5. Prohibited Items</h2>
+        <ul>
+          <li>The Guest shall not leave any contraband, controlled substances, drugs, or drug paraphernalia — whether legal or illegal — on the Property at any time.</li>
+          <li>The Guest shall ensure all such items are removed from the Property upon departure. Violations may result in financial liability and removal from the Property.</li>
+        </ul>
+      </div>
+
+      <!-- 6 -->
+      <div class="waiver-section">
+        <h2>6. Watercraft</h2>
+        <ul>
+          <li>Use of Watercraft is subject to advance written approval by Ownership and is not guaranteed as part of Property access.</li>
+          <li>The Guest shall use all required safety equipment, including life jackets where applicable.</li>
+          <li>All children shall wear life jackets at all times while on Watercraft or docks.</li>
+          <li>No Watercraft shall be operated by the Guest under the influence of alcohol, drugs, or any impairing substance.</li>
+          <li>The Company assumes no liability for injuries, accidents, or losses related to Watercraft use. All risk is assumed by the Guest and the Approved User.</li>
+        </ul>
+      </div>
+
+      <!-- 7 -->
+      <div class="waiver-section">
+        <h2>7. Financial Responsibility</h2>
+        <ul>
+          <li>The Guest acknowledges that any damage caused by the Guest to the Property, its contents, any Watercraft, or pool and hot tub equipment may result in financial liability to the Approved User, and the Guest agrees to cooperate fully in any damage assessment.</li>
+          <li>Violations of this Waiver may result in the Guest's removal from the Property and the potential loss of future access for the Approved User.</li>
+        </ul>
+      </div>
+
+      <!-- 8 -->
+      <div class="waiver-section">
+        <h2>8. Pets</h2>
+        <ul>
+          <li>Pets are not permitted on the Property unless the Approved User has received prior written approval from Ownership for the specific stay.</li>
+          <li>Approved pets are not permitted on furniture, bedding, or in the Master Bedroom under any circumstances.</li>
+          <li>Any damage caused by a Pet brought by the Guest shall be the financial responsibility of the Approved User.</li>
+        </ul>
+      </div>
+
+      <!-- 9 -->
+      <div class="waiver-section">
+        <h2>9. Occupancy &amp; Vehicles</h2>
+        <ul>
+          <li>The maximum overnight occupancy of the Property is limited per the Use Policy. The Guest shall not admit or invite additional individuals beyond that limit.</li>
+          <li>All vehicles shall be parked in designated areas only. Boats on trailers, RVs, and oversized vehicles require prior written approval from Ownership.</li>
+        </ul>
+      </div>
+
+      <!-- 10 -->
+      <div class="waiver-section">
+        <h2>10. Pool &amp; Hot Tub</h2>
+        <ul>
+          <li>Pool and hot tub use is at the Guest's sole risk. The Company assumes no liability for any injury, accident, or loss arising from use.</li>
+          <li>Pool and hot tub hours are 7:00 AM – 10:00 PM. Glass containers are prohibited in and around these areas at all times.</li>
+          <li>Children shall be supervised by a responsible adult at all times while in or near the pool or hot tub.</li>
+          <li>The Guest shall not tamper with or add chemicals to the pool or hot tub system.</li>
+        </ul>
+      </div>
+
+      <!-- 11 -->
+      <div class="waiver-section">
+        <h2>11. Emergency Protocols</h2>
+        <ul>
+          <li>In the event of a Property emergency, the Guest shall notify the Approved User immediately so that Ownership can be contacted.</li>
+          <li>The Guest shall not authorize repair services or take actions affecting Property systems without direction from the Approved User or Ownership.</li>
+        </ul>
+      </div>
+
+      <!-- 12 — HIGHLIGHTED -->
+      <div class="waiver-section highlight">
+        <h2>12. Assumption of Risk, Release &amp; Indemnification</h2>
+        <ul>
+          <li>The Guest enters and uses the Property — including all indoor areas, outdoor areas, water access points, docks, recreational features, and any Watercraft — voluntarily and at their own sole risk.</li>
+          <li>The Guest accepts the Property in its current, as-is condition and assumes all risk associated with its physical features, layout, recreational amenities, and any pre-existing conditions, whether known or unknown.</li>
+          <li>The Company shall not be liable for any injury, illness, death, loss, or damage sustained by the Guest arising from use of the Property, including claims arising from the Company's own negligence, regardless of cause, except in cases of the Company's gross negligence or willful misconduct.</li>
+          <li>The Company bears no liability for any injury, incident, or damage in which the voluntary consumption of alcohol, cannabis, or any impairing substance by the Guest was a contributing factor.</li>
+          <li>The Guest hereby releases, discharges, and holds harmless the Company, Ownership, and their respective officers, agents, and representatives from any and all claims, demands, losses, and liabilities of any kind arising out of or relating to the Guest's presence at or use of the Property.</li>
+          <li>The Guest agrees to indemnify and defend the Company and Ownership against any claim, loss, damage, or expense (including reasonable attorneys' fees) arising from the Guest's conduct, negligence, or violation of this Waiver while on or about the Property.</li>
+        </ul>
+      </div>
+
+      <!-- 13 -->
+      <div class="waiver-section">
+        <h2>13. Severability</h2>
+        <p>If any provision of this Waiver is found to be invalid, unenforceable, or contrary to applicable law, that provision shall be modified to the minimum extent necessary to make it enforceable, or severed if modification is not possible. The remaining provisions of this Waiver shall continue in full force and effect.</p>
+      </div>
+
+      <div style="height: 40px;"></div>
+    </div>
+  </div>
+
+  <div class="scroll-nudge" id="scroll-nudge">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M7 2v10M3 8l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Scroll to continue
+  </div>
+
+  <div class="waiver-footer-bar">
+    <button class="btn btn-primary" id="btn-to-sign" disabled>I Have Read the Waiver — Continue to Sign →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 2 — SIGNATURE
+════════════════════════════════════════════════════════════ -->
+<div id="screen-sign" class="screen">
+  <div class="kiosk-header">
+    <span class="wordmark">All-Pro Auto Reconditioning</span>
+    <div class="step-indicator">
+      <div class="step-dot done"></div>
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+    </div>
+  </div>
+
+  <div class="sign-body">
+    <h2>Sign Below</h2>
+    <p class="sign-subhead">By signing, you confirm you have read and agree to all terms of the Tiki House Guest Waiver.</p>
+
+    <div class="name-field-wrap">
+      <label>Your Full Name (Print)</label>
+      <input type="text" id="guest-name" placeholder="First and last name" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+
+    <div class="sig-wrap">
+      <div class="sig-label">
+        <span>Signature</span>
+        <button class="sig-clear" id="btn-clear-sig">Clear</button>
+      </div>
+      <canvas id="sig-canvas"></canvas>
+    </div>
+
+    <div class="consent-row">
+      <input type="checkbox" id="consent-check">
+      <p>I have read, understand, and voluntarily agree to all terms of this Waiver as a condition of access to the Tiki House. I acknowledge that I am signing this of my own free will.</p>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-submit" disabled>Submit Waiver</button>
+      <button class="btn btn-secondary" id="btn-back-to-waiver">← Back to Waiver</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 3 — CONFIRMATION
+════════════════════════════════════════════════════════════ -->
+<div id="screen-confirm" class="screen">
+  <div class="confirm-icon">✓</div>
+  <h2 class="confirm-title">Waiver Signed</h2>
+  <p class="confirm-name" id="confirm-name-display"></p>
+  <p class="confirm-timestamp" id="confirm-timestamp"></p>
+  <p class="confirm-email-status sending" id="confirm-email-status">Sending record…</p>
+
+  <div class="btn-row" style="max-width:420px; width:100%; margin-top:16px;">
+    <button class="btn btn-primary" id="btn-next-guest">Next Guest →</button>
+    <button class="btn btn-secondary" id="btn-done-signing">All Done — View Log</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 4 — LOG
+════════════════════════════════════════════════════════════ -->
+<div id="screen-log" class="screen">
+  <div class="kiosk-header">
+    <span class="wordmark">Signed Waivers — This Session</span>
+    <button class="btn btn-ghost" id="btn-log-back">← Back</button>
+  </div>
+  <div class="log-body">
+    <div id="log-list"></div>
+  </div>
+  <div style="padding: 16px 28px; border-top: 1px solid var(--rule); background: var(--surface);">
+    <button class="btn btn-primary" id="btn-new-session">Start New Session</button>
+  </div>
+</div>
+
+<script>
+// ─── EMAILJS CONFIG ─────────────────────────────────────────────────────────
+// Replace these three values with your EmailJS credentials
+const EMAILJS_PUBLIC_KEY  = 'htbLz3cS-R-U5fONO';
+const EMAILJS_SERVICE_ID  = 'service_irr91tj';
+const EMAILJS_TEMPLATE_ID = 'template_qvqz4u5';
+const RECIPIENT_EMAIL     = 'emcanulty@allprorecon.com';
+
+emailjs.init(EMAILJS_PUBLIC_KEY);
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let sessionHost = '';
+let sessionDates = '';
+let signedLog = [];
+let sigHasContent = false;
+
+// ─── SCREEN NAVIGATION ───────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ─── WELCOME ─────────────────────────────────────────────────────────────────
+// ─── DATE PICKERS ────────────────────────────────────────────────────────────
+let arrivalDate   = null;
+let departureDate = null;
+
+function formatDateRange(start, end) {
+  const months = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+  if (start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
+    return `${months[start.getMonth()]} ${start.getDate()} – ${end.getDate()}, ${end.getFullYear()}`;
+  }
+  return `${months[start.getMonth()]} ${start.getDate()} – ${months[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
+}
+
+const departurePicker = new Pikaday({
+  field:     document.getElementById('departure-cal'),
+  container: document.getElementById('departure-cal'),
+  bound:     false,
+  minDate:   new Date(),
+  toString(date) { return date.toDateString(); },
+  onSelect(date) {
+    departureDate = date;
+    const summary = document.getElementById('date-summary');
+    summary.textContent = formatDateRange(arrivalDate, departureDate);
+    summary.style.display = 'block';
+    sessionDates = formatDateRange(arrivalDate, departureDate);
+  }
+});
+
+const arrivalPicker = new Pikaday({
+  field:     document.getElementById('arrival-cal'),
+  container: document.getElementById('arrival-cal'),
+  bound:     false,
+  minDate:   new Date(),
+  toString(date) { return date.toDateString(); },
+  onSelect(date) {
+    arrivalDate   = date;
+    departureDate = null;
+    sessionDates  = '';
+    // Reset departure picker and show it
+    const minDep = new Date(date);
+    minDep.setDate(minDep.getDate() + 1);
+    departurePicker.setMinDate(minDep);
+    departurePicker.setDate(null, true);
+    document.getElementById('departure-wrap').style.display = 'block';
+    document.getElementById('date-summary').style.display = 'none';
+  }
+});
+
+// ─── WELCOME ─────────────────────────────────────────────────────────────────
+document.getElementById('btn-start').addEventListener('click', () => {
+  const hostField = document.getElementById('host-field-row');
+  sessionHost = document.getElementById('host-name').value.trim();
+
+  let valid = true;
+
+  if (!sessionHost) {
+    hostField.classList.add('field-error');
+    hostField.addEventListener('animationend', () => hostField.classList.remove('field-error'), { once: true });
+    valid = false;
+  }
+
+  if (!departureDate) {
+    const depWrap = document.getElementById('departure-wrap').style.display === 'none'
+      ? document.querySelector('.date-picker-wrap')
+      : document.getElementById('departure-wrap');
+    depWrap.classList.add('field-error');
+    depWrap.addEventListener('animationend', () => depWrap.classList.remove('field-error'), { once: true });
+    valid = false;
+  }
+
+  if (!valid) return;
+
+  resetWaiverScreen();
+  showScreen('screen-waiver');
+});
+
+document.getElementById('btn-view-log').addEventListener('click', () => {
+  renderLog();
+  showScreen('screen-log');
+});
+
+// ─── WAIVER SCROLL DETECTION ─────────────────────────────────────────────────
+const waiverScroll = document.getElementById('waiver-scroll');
+const scrollNudge  = document.getElementById('scroll-nudge');
+const btnToSign    = document.getElementById('btn-to-sign');
+
+function resetWaiverScreen() {
+  btnToSign.disabled = true;
+  scrollNudge.classList.remove('hidden');
+  waiverScroll.scrollTop = 0;
+}
+
+waiverScroll.addEventListener('scroll', () => {
+  const el = waiverScroll;
+  const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 60;
+  if (atBottom) {
+    btnToSign.disabled = false;
+    scrollNudge.classList.add('hidden');
+  }
+}, { passive: true });
+
+document.getElementById('btn-to-sign').addEventListener('click', () => {
+  document.getElementById('guest-name').value = '';
+  clearCanvas();
+  document.getElementById('consent-check').checked = false;
+  updateSubmitBtn();
+  showScreen('screen-sign');
+});
+
+// ─── SIGNATURE CANVAS ────────────────────────────────────────────────────────
+const canvas = document.getElementById('sig-canvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  const dpr  = window.devicePixelRatio || 1;
+  canvas.width  = rect.width  * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth   = 2.5;
+  ctx.lineCap     = 'round';
+  ctx.lineJoin    = 'round';
+}
+
+window.addEventListener('resize', () => { const had = sigHasContent; resizeCanvas(); if (had) { sigHasContent = false; updateSubmitBtn(); }});
+resizeCanvas();
+
+let drawing = false;
+let lastX = 0, lastY = 0;
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const src  = e.touches ? e.touches[0] : e;
+  return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+}
+
+canvas.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  drawing = true;
+  const p = getPos(e);
+  lastX = p.x; lastY = p.y;
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+});
+
+canvas.addEventListener('pointermove', e => {
+  if (!drawing) return;
+  e.preventDefault();
+  const p = getPos(e);
+  ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(p.x, p.y);
+  lastX = p.x; lastY = p.y;
+  if (!sigHasContent) {
+    sigHasContent = true;
+    canvas.classList.add('has-sig');
+    updateSubmitBtn();
+  }
+});
+
+canvas.addEventListener('pointerup',     () => { drawing = false; ctx.beginPath(); });
+canvas.addEventListener('pointercancel', () => { drawing = false; ctx.beginPath(); });
+
+function clearCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+  sigHasContent = false;
+  canvas.classList.remove('has-sig');
+  updateSubmitBtn();
+}
+
+document.getElementById('btn-clear-sig').addEventListener('click', clearCanvas);
+
+// ─── SUBMIT GATE ─────────────────────────────────────────────────────────────
+function updateSubmitBtn() {
+  const name    = document.getElementById('guest-name').value.trim();
+  const consent = document.getElementById('consent-check').checked;
+  document.getElementById('btn-submit').disabled = !(name && sigHasContent && consent);
+}
+
+document.getElementById('guest-name').addEventListener('input', updateSubmitBtn);
+document.getElementById('consent-check').addEventListener('change', updateSubmitBtn);
+
+// ─── BACK ─────────────────────────────────────────────────────────────────────
+document.getElementById('btn-back-to-waiver').addEventListener('click', () => {
+  showScreen('screen-waiver');
+});
+
+// ─── SUBMIT ──────────────────────────────────────────────────────────────────
+document.getElementById('btn-submit').addEventListener('click', async () => {
+  const guestName = document.getElementById('guest-name').value.trim();
+  const now       = new Date();
+  const timestamp = now.toLocaleString('en-US', {
+    month: 'long', day: 'numeric', year: 'numeric',
+    hour: 'numeric', minute: '2-digit', timeZoneName: 'short'
+  });
+
+  // Compress signature: draw current canvas onto a small offscreen canvas,
+  // export as JPEG at 60% quality — keeps base64 string well under EmailJS's 50kb variable limit.
+  const offscreen = document.createElement('canvas');
+  offscreen.width  = 400;
+  offscreen.height = 120;
+  const offCtx = offscreen.getContext('2d');
+  offCtx.fillStyle = '#ffffff';
+  offCtx.fillRect(0, 0, 400, 120);
+  offCtx.drawImage(canvas, 0, 0, 400, 120);
+  const sigDataURL     = offscreen.toDataURL('image/jpeg', 0.6);
+  const sigImgTag      = `<img src="${sigDataURL}" alt="Guest signature" style="max-width:100%; display:block;">`;
+
+  // Log entry
+  const entry = { guestName, timestamp, emailStatus: 'sending' };
+  signedLog.push(entry);
+
+  // Show confirmation
+  document.getElementById('confirm-name-display').textContent = guestName;
+  document.getElementById('confirm-timestamp').textContent    = timestamp;
+  const statusEl = document.getElementById('confirm-email-status');
+  statusEl.textContent  = 'Sending record…';
+  statusEl.className    = 'confirm-email-status sending';
+  showScreen('screen-confirm');
+
+  // Send email via EmailJS
+  // ── EmailJS Template Variables ────────────────────────────────────────────
+  // In your EmailJS template (HTML code editor), use these variables:
+  //   {{to_email}}        — recipient address
+  //   {{guest_name}}      — guest's full name
+  //   {{host_name}}       — approved user / host name
+  //   {{visit_dates}}     — visit date range
+  //   {{timestamp}}       — date and time signed
+  //   {{{signature_img}}} — full <img> tag with inline base64 src (triple brackets = no HTML escaping)
+  // ─────────────────────────────────────────────────────────────────────────
+  try {
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email:      RECIPIENT_EMAIL,
+      guest_name:    guestName,
+      host_name:     sessionHost,
+      visit_dates:   sessionDates,
+      timestamp:     timestamp,
+      signature_img: sigImgTag,
+    });
+    statusEl.textContent = '✓ Record sent';
+    statusEl.className   = 'confirm-email-status sent';
+    entry.emailStatus    = 'sent';
+  } catch (err) {
+    console.error('EmailJS error:', err);
+    statusEl.textContent = '⚠ Email failed — screenshot the log';
+    statusEl.className   = 'confirm-email-status failed';
+    entry.emailStatus    = 'failed';
+  }
+});
+
+// ─── NEXT GUEST / DONE ───────────────────────────────────────────────────────
+document.getElementById('btn-next-guest').addEventListener('click', () => {
+  resetWaiverScreen();
+  showScreen('screen-waiver');
+});
+
+document.getElementById('btn-done-signing').addEventListener('click', () => {
+  renderLog();
+  showScreen('screen-log');
+});
+
+// ─── LOG ─────────────────────────────────────────────────────────────────────
+function renderLog() {
+  const list = document.getElementById('log-list');
+  if (signedLog.length === 0) {
+    list.innerHTML = '<p class="log-empty">No waivers signed this session yet.</p>';
+    return;
+  }
+  list.innerHTML = signedLog.map((e, i) => `
+    <div class="log-entry">
+      <div>
+        <div class="log-entry-name">${e.guestName}</div>
+        <div class="log-entry-meta">${e.timestamp}</div>
+      </div>
+      <span class="log-entry-status ${e.emailStatus === 'sent' ? 'sent' : ''}">${
+        e.emailStatus === 'sent' ? 'Sent' :
+        e.emailStatus === 'failed' ? 'Email failed' : 'Pending'
+      }</span>
+    </div>
+  `).join('');
+}
+
+document.getElementById('btn-log-back').addEventListener('click', () => {
+  showScreen('screen-welcome');
+});
+
+document.getElementById('btn-new-session').addEventListener('click', () => {
+  signedLog = [];
+  document.getElementById('host-name').value = '';
+  arrivalDate   = null;
+  departureDate = null;
+  sessionDates  = '';
+  arrivalPicker.setDate(null, true);
+  departurePicker.setDate(null, true);
+  document.getElementById('departure-wrap').style.display = 'none';
+  document.getElementById('date-summary').style.display   = 'none';
+  showScreen('screen-welcome');
+});
+</script>
+</body>
+</html>
