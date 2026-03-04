@@ -1242,7 +1242,11 @@ document.getElementById('btn-to-sign').addEventListener('click', () => {
   document.getElementById('consent-check').checked = false;
   updateSubmitBtn();
   showScreen('screen-sign');
-  resizeCanvas(); // canvas is now visible — measure real dimensions
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      resizeCanvas(); // double rAF ensures iOS Safari has fully painted before measuring
+    });
+  });
 });
 
 // ─── SIGNATURE CANVAS ────────────────────────────────────────────────────────
