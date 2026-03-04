@@ -1242,6 +1242,7 @@ document.getElementById('btn-to-sign').addEventListener('click', () => {
   document.getElementById('consent-check').checked = false;
   updateSubmitBtn();
   showScreen('screen-sign');
+  resizeCanvas(); // canvas is now visible — measure real dimensions
 });
 
 // ─── SIGNATURE CANVAS ────────────────────────────────────────────────────────
@@ -1261,7 +1262,6 @@ function resizeCanvas() {
 }
 
 window.addEventListener('resize', () => { const had = sigHasContent; resizeCanvas(); if (had) { sigHasContent = false; updateSubmitBtn(); }});
-resizeCanvas();
 
 let drawing = false;
 let lastX = 0, lastY = 0;
