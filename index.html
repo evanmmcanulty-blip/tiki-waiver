@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Tiki House — Guest Waiver</title>
-<script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
   /* ─── RESET & BASE ─────────────────────────────────────────── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -998,7 +998,7 @@ const EMAILJS_SERVICE_ID  = 'service_irr91tj';
 const EMAILJS_TEMPLATE_ID = 'template_qvqz4u5';
 const RECIPIENT_EMAIL     = 'emcanulty@allprorecon.com';
 
-emailjs.init(EMAILJS_PUBLIC_KEY);
+emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
 let sessionHost = '';
