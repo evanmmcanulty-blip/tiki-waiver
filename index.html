@@ -13,41 +13,80 @@
 
   /* ─── PIKADAY OVERRIDES ─────────────────────────────────────── */
   .pika-single {
-    font-family: 'Georgia', serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Georgia', serif;
     border: 1px solid var(--rule);
     border-radius: var(--radius);
     box-shadow: none;
     width: 100%;
+    max-width: 100%;
+    overflow: hidden;
     background: var(--surface);
   }
-  .pika-single.is-bound { display: none; } /* only inline */
-  .pika-lendar { width: 100%; float: none; }
-  .pika-title { padding: 8px 12px; }
-  .pika-title select { font-family: 'Georgia', serif; font-size: 14px; }
-  .pika-prev, .pika-next {
-    background: none;
-    opacity: 0.5;
-    font-size: 18px;
-    width: 30px; height: 30px;
-    text-indent: 0;
-    overflow: visible;
-    color: var(--ink);
+  .pika-single.is-bound { display: none; }
+  .pika-lendar { width: 100% !important; float: none; }
+  .pika-title {
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
-  .pika-prev::after  { content: '‹'; }
-  .pika-next::after  { content: '›'; }
-  .pika-table th { font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--ink-light); }
-  .pika-button {
-    font-family: 'Georgia', serif;
+  .pika-title select {
+    font-family: -apple-system, BlinkMacSystemFont, 'Georgia', serif;
     font-size: 14px;
-    border-radius: 4px;
+  }
+  .pika-prev, .pika-next {
+    position: static !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px;
+    background: none !important;
+    border: none;
+    opacity: 0.6;
+    color: var(--ink);
+    font-size: 0 !important;        /* hide default text/background-image label */
+    text-indent: 0 !important;
+    overflow: visible !important;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .pika-prev::after  { content: '‹'; font-size: 22px; line-height: 1; color: var(--ink); }
+  .pika-next::after  { content: '›'; font-size: 22px; line-height: 1; color: var(--ink); }
+  .pika-prev.is-disabled, .pika-next.is-disabled { opacity: 0.2; }
+  .pika-table {
+    width: 100% !important;
+    table-layout: fixed;
+    border-collapse: collapse;
+  }
+  .pika-table th, .pika-table td { width: 14.28%; }
+  .pika-table th {
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--ink-light);
+    padding: 4px 0;
+    text-align: center;
+  }
+  .pika-button {
+    font-family: -apple-system, BlinkMacSystemFont, 'Georgia', serif;
+    font-size: 15px;
+    border-radius: 50%;
     text-align: center;
     background: transparent;
     color: var(--ink);
+    width: 100%;
+    min-height: 44px;
+    line-height: 44px;
+    padding: 0;
+    display: block;
+    -webkit-tap-highlight-color: transparent;
   }
   .pika-button:hover, .pika-button:focus { background: var(--bg) !important; color: var(--ink) !important; }
-  .is-selected .pika-button { background: var(--ink) !important; color: #fff !important; border-radius: 4px; }
-  .is-today .pika-button { color: var(--ink); font-weight: bold; }
-  .is-disabled .pika-button { color: var(--rule); cursor: not-allowed; }
+  .is-selected .pika-button { background: var(--ink) !important; color: #fff !important; }
+  .is-today .pika-button { font-weight: 700; color: var(--ink); }
+  .is-disabled .pika-button { color: var(--rule) !important; cursor: not-allowed; background: transparent !important; }
 
   /* date picker wrapper */
   .date-picker-wrap { display: flex; flex-direction: column; gap: 4px; }
@@ -650,7 +689,7 @@
 ════════════════════════════════════════════════════════════ -->
 <div id="screen-waiver" class="screen">
   <div class="kiosk-header">
-    <span class="wordmark">All-Pro Auto Reconditioning</span>
+    <button class="btn btn-ghost" id="btn-waiver-back" style="padding:10px 0; width:auto;">‹ Back</button>
     <div class="step-indicator">
       <div class="step-dot done"></div>
       <div class="step-dot active"></div>
@@ -820,6 +859,7 @@
       </div>
 
       <div style="height: 40px;"></div>
+      <div id="waiver-sentinel" style="height:1px;"></div>
     </div>
   </div>
 
@@ -840,7 +880,7 @@
 ════════════════════════════════════════════════════════════ -->
 <div id="screen-sign" class="screen">
   <div class="kiosk-header">
-    <span class="wordmark">All-Pro Auto Reconditioning</span>
+    <button class="btn btn-ghost" id="btn-sign-back" style="padding:10px 0; width:auto;">‹ Back</button>
     <div class="step-indicator">
       <div class="step-dot done"></div>
       <div class="step-dot done"></div>
@@ -873,7 +913,6 @@
 
     <div class="btn-row">
       <button class="btn btn-primary" id="btn-submit" disabled>Submit Waiver</button>
-      <button class="btn btn-secondary" id="btn-back-to-waiver">← Back to Waiver</button>
     </div>
   </div>
 </div>
@@ -1020,20 +1059,40 @@ const waiverScroll = document.getElementById('waiver-scroll');
 const scrollNudge  = document.getElementById('scroll-nudge');
 const btnToSign    = document.getElementById('btn-to-sign');
 
+function unlockWaiver() {
+  btnToSign.disabled = false;
+  scrollNudge.classList.add('hidden');
+}
+
 function resetWaiverScreen() {
   btnToSign.disabled = true;
   scrollNudge.classList.remove('hidden');
   waiverScroll.scrollTop = 0;
 }
 
+// Primary: IntersectionObserver on sentinel — fires reliably on iOS Safari
+// regardless of fractional pixel scroll math
+const sentinel = document.getElementById('waiver-sentinel');
+const sentinelObserver = new IntersectionObserver(
+  (entries) => { if (entries[0].isIntersecting) unlockWaiver(); },
+  { root: waiverScroll, threshold: 0.1 }
+);
+sentinelObserver.observe(sentinel);
+
+// Fallback: scroll event with generous threshold for older browsers
 waiverScroll.addEventListener('scroll', () => {
   const el = waiverScroll;
-  const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 60;
-  if (atBottom) {
-    btnToSign.disabled = false;
-    scrollNudge.classList.add('hidden');
-  }
+  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 30) unlockWaiver();
 }, { passive: true });
+
+// ─── BACK BUTTONS ────────────────────────────────────────────────────────────
+document.getElementById('btn-waiver-back').addEventListener('click', () => {
+  showScreen('screen-welcome');
+});
+
+document.getElementById('btn-sign-back').addEventListener('click', () => {
+  showScreen('screen-waiver');
+});
 
 document.getElementById('btn-to-sign').addEventListener('click', () => {
   document.getElementById('guest-name').value = '';
@@ -1118,11 +1177,6 @@ function updateSubmitBtn() {
 
 document.getElementById('guest-name').addEventListener('input', updateSubmitBtn);
 document.getElementById('consent-check').addEventListener('change', updateSubmitBtn);
-
-// ─── BACK ─────────────────────────────────────────────────────────────────────
-document.getElementById('btn-back-to-waiver').addEventListener('click', () => {
-  showScreen('screen-waiver');
-});
 
 // ─── SUBMIT ──────────────────────────────────────────────────────────────────
 document.getElementById('btn-submit').addEventListener('click', async () => {
