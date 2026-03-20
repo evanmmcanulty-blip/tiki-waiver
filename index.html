@@ -28,8 +28,6 @@
   --cream-ghost: rgba(240,232,212,0.08);
   --rule: rgba(200,131,26,0.15);
   --rule-bright: rgba(200,131,26,0.35);
-  --shadow-warm: 0 8px 32px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
-  --shadow-card: 0 24px 64px rgba(0,0,0,0.7), 0 4px 16px rgba(0,0,0,0.5);
   --radius: 3px;
   --radius-lg: 6px;
   --font-display: 'Playfair Display', Georgia, serif;
@@ -47,7 +45,6 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── NOISE GRAIN OVERLAY ── */
 body::after {
   content: '';
   position: fixed;
@@ -58,533 +55,338 @@ body::after {
   opacity: 0.5;
 }
 
-/* ── AMBIENT BACKGROUND ── */
 .bg-ambient {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
+  position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
 }
 .bg-ambient::before {
-  content: '';
-  position: absolute;
-  width: 800px;
-  height: 800px;
-  border-radius: 50%;
+  content: ''; position: absolute; width: 800px; height: 800px; border-radius: 50%;
   background: radial-gradient(circle, rgba(200,131,26,0.06) 0%, transparent 70%);
-  top: -200px;
-  right: -200px;
+  top: -200px; right: -200px;
   animation: drift1 18s ease-in-out infinite alternate;
 }
 .bg-ambient::after {
-  content: '';
-  position: absolute;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
+  content: ''; position: absolute; width: 600px; height: 600px; border-radius: 50%;
   background: radial-gradient(circle, rgba(160,90,10,0.05) 0%, transparent 70%);
-  bottom: -150px;
-  left: -100px;
+  bottom: -150px; left: -100px;
   animation: drift2 22s ease-in-out infinite alternate;
 }
-@keyframes drift1 { 0%{transform:translate(0,0);} 100%{transform:translate(-60px, 80px);} }
+@keyframes drift1 { 0%{transform:translate(0,0);} 100%{transform:translate(-60px,80px);} }
 @keyframes drift2 { 0%{transform:translate(0,0);} 100%{transform:translate(80px,-60px);} }
 
 /* ── SCREENS ── */
 .screen {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  z-index: 10;
-  opacity: 0;
-  pointer-events: none;
+  position: fixed; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; overflow: hidden;
+  z-index: 10; opacity: 0; pointer-events: none;
   transition: opacity 0.5s cubic-bezier(0.4,0,0.2,1), transform 0.5s cubic-bezier(0.4,0,0.2,1);
   transform: translateY(12px);
 }
-.screen.active {
-  opacity: 1;
-  pointer-events: all;
-  transform: translateY(0);
-}
-.screen.exiting {
-  opacity: 0;
-  transform: translateY(-12px);
-  pointer-events: none;
-}
+.screen.active { opacity: 1; pointer-events: all; transform: translateY(0); }
+.screen.exiting { opacity: 0; transform: translateY(-12px); pointer-events: none; }
 
-/* ── LANDING SCREEN ── */
+/* ── LANDING ── */
 #screen-landing {
   background: linear-gradient(165deg, var(--surface-1) 0%, var(--surface-0) 50%, var(--surface-2) 100%);
-  padding: 48px 40px;
+  padding: 32px 40px;
   gap: 0;
+  justify-content: flex-start;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
+
+.landing-spacer { flex-shrink: 0; height: 24px; }
 
 .landing-eyebrow {
-  font-family: var(--font-label);
-  font-size: 9px;
-  letter-spacing: 0.42em;
-  text-transform: uppercase;
-  color: var(--amber);
-  margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  opacity: 0;
-  transform: translateY(20px);
+  font-family: var(--font-label); font-size: 9px; letter-spacing: 0.42em;
+  text-transform: uppercase; color: var(--amber); margin-bottom: 20px;
+  display: flex; align-items: center; gap: 14px;
+  opacity: 0; transform: translateY(20px);
   animation: rise 0.9s cubic-bezier(0.16,1,0.3,1) 0.2s forwards;
+  flex-shrink: 0;
 }
-.landing-eyebrow::before,
-.landing-eyebrow::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(to right, transparent, var(--amber-dim));
-}
-.landing-eyebrow::after {
-  background: linear-gradient(to left, transparent, var(--amber-dim));
-}
+.landing-eyebrow::before,.landing-eyebrow::after { content: ''; flex: 1; height: 1px; }
+.landing-eyebrow::before { background: linear-gradient(to right, transparent, var(--amber-dim)); }
+.landing-eyebrow::after  { background: linear-gradient(to left,  transparent, var(--amber-dim)); }
 
 .landing-title {
-  font-family: var(--font-display);
-  font-size: clamp(52px, 9vw, 88px);
-  font-weight: 700;
-  line-height: 0.92;
-  letter-spacing: -0.02em;
-  text-align: center;
-  color: var(--cream);
-  margin-bottom: 8px;
-  opacity: 0;
-  transform: translateY(24px);
+  font-family: var(--font-display); font-size: clamp(48px, 8vw, 80px); font-weight: 700;
+  line-height: 0.92; letter-spacing: -0.02em; text-align: center; color: var(--cream);
+  margin-bottom: 6px; flex-shrink: 0;
+  opacity: 0; transform: translateY(24px);
   animation: rise 1s cubic-bezier(0.16,1,0.3,1) 0.35s forwards;
 }
-.landing-title em {
-  font-style: italic;
-  color: var(--amber);
-  display: block;
-}
+.landing-title em { font-style: italic; color: var(--amber); display: block; }
 
 .landing-rule {
-  width: 40px;
-  height: 1px;
-  background: var(--rule-bright);
-  margin: 28px auto;
-  opacity: 0;
-  animation: rise 0.8s cubic-bezier(0.16,1,0.3,1) 0.5s forwards;
+  width: 40px; height: 1px; background: var(--rule-bright);
+  margin: 20px auto; flex-shrink: 0;
+  opacity: 0; animation: rise 0.8s cubic-bezier(0.16,1,0.3,1) 0.5s forwards;
 }
 
 .landing-sub {
-  font-size: 13px;
-  font-weight: 300;
-  color: var(--cream-dim);
-  text-align: center;
-  letter-spacing: 0.02em;
-  line-height: 1.7;
-  max-width: 320px;
-  opacity: 0;
-  animation: rise 0.8s cubic-bezier(0.16,1,0.3,1) 0.6s forwards;
-  margin-bottom: 48px;
+  font-size: 13px; font-weight: 300; color: var(--cream-dim); text-align: center;
+  letter-spacing: 0.02em; line-height: 1.7; max-width: 320px;
+  margin: 0 auto 32px; flex-shrink: 0;
+  opacity: 0; animation: rise 0.8s cubic-bezier(0.16,1,0.3,1) 0.6s forwards;
 }
 
-/* HOST + DATE SELECTORS */
 .form-section {
-  width: 100%;
-  max-width: 480px;
-  opacity: 0;
-  animation: rise 0.8s cubic-bezier(0.16,1,0.3,1) 0.75s forwards;
+  width: 100%; max-width: 480px; flex-shrink: 0;
+  opacity: 0; animation: rise 0.8s cubic-bezier(0.16,1,0.3,1) 0.75s forwards;
+  padding-bottom: 32px;
 }
 
-.field-group {
-  margin-bottom: 20px;
-}
+.field-group { margin-bottom: 16px; }
 
 .field-label {
-  font-family: var(--font-label);
-  font-size: 8px;
-  letter-spacing: 0.36em;
-  text-transform: uppercase;
-  color: var(--amber);
-  margin-bottom: 8px;
-  display: block;
+  font-family: var(--font-label); font-size: 8px; letter-spacing: 0.36em;
+  text-transform: uppercase; color: var(--amber); margin-bottom: 8px; display: block;
 }
 
 .field-select {
-  width: 100%;
-  padding: 14px 18px;
-  background: var(--surface-3);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  color: var(--cream);
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 300;
-  appearance: none;
-  -webkit-appearance: none;
-  cursor: pointer;
+  width: 100%; padding: 14px 18px; background: var(--surface-3);
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  color: var(--cream); font-family: var(--font-body); font-size: 14px; font-weight: 300;
+  appearance: none; -webkit-appearance: none; cursor: pointer;
   transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c8831a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 16px center;
+  background-repeat: no-repeat; background-position: right 16px center;
 }
-.field-select:focus {
-  outline: none;
-  border-color: var(--amber);
-  box-shadow: 0 0 0 3px var(--amber-glow);
-  background-color: var(--surface-4);
-}
+.field-select:focus { outline: none; border-color: var(--amber); box-shadow: 0 0 0 3px var(--amber-glow); background-color: var(--surface-4); }
 .field-select option { background: var(--surface-2); color: var(--cream); }
 
-/* DATE PICKER */
+/* ── DATE RANGE PICKER ── */
 .date-picker-wrap {
-  background: var(--surface-3);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  overflow: hidden;
-  transition: border-color 0.25s;
+  background: var(--surface-3); border: 1px solid var(--rule);
+  border-radius: var(--radius); overflow: hidden; transition: border-color 0.25s;
 }
-.date-picker-wrap.has-date { border-color: var(--amber-dim); }
+.date-picker-wrap.has-range { border-color: var(--amber-dim); }
 
 .dp-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--rule);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-bottom: 1px solid var(--rule);
 }
 .dp-month-label {
-  font-family: var(--font-label);
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--cream);
-  font-weight: 500;
+  font-family: var(--font-label); font-size: 11px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--cream); font-weight: 500;
 }
 .dp-nav {
-  background: none;
-  border: none;
-  color: var(--amber);
-  cursor: pointer;
-  font-size: 16px;
-  padding: 4px 10px;
-  border-radius: var(--radius);
-  transition: background 0.2s, transform 0.15s;
-  line-height: 1;
+  background: none; border: none; color: var(--amber); cursor: pointer;
+  font-size: 16px; padding: 4px 10px; border-radius: var(--radius);
+  transition: background 0.2s, transform 0.15s; line-height: 1;
 }
 .dp-nav:active { transform: scale(0.9); background: var(--amber-glow); }
 
 .dp-grid {
-  display: grid;
-  grid-template-columns: repeat(7,1fr);
-  padding: 8px 8px 12px;
-  gap: 2px;
+  display: grid; grid-template-columns: repeat(7,1fr);
+  padding: 6px 6px 10px; gap: 2px;
 }
 .dp-day-header {
-  text-align: center;
-  font-family: var(--font-label);
-  font-size: 8px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--cream-mute);
-  padding: 6px 0;
+  text-align: center; font-family: var(--font-label); font-size: 8px;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--cream-mute); padding: 5px 0;
 }
 .dp-day {
-  text-align: center;
-  padding: 9px 4px;
-  border-radius: var(--radius);
-  font-size: 13px;
-  font-weight: 300;
-  color: var(--cream-dim);
-  cursor: pointer;
+  text-align: center; padding: 8px 2px; border-radius: var(--radius);
+  font-size: 13px; font-weight: 300; color: var(--cream-dim); cursor: pointer;
   transition: background 0.15s, color 0.15s, transform 0.1s;
-  min-width: 0;
-  border: 1px solid transparent;
-  user-select: none;
+  border: 1px solid transparent; user-select: none; position: relative;
 }
 .dp-day:not(.empty):not(.past):hover { background: var(--amber-glow); color: var(--amber-bright); }
 .dp-day:not(.empty):not(.past):active { transform: scale(0.92); }
-.dp-day.selected { background: var(--amber); color: var(--surface-0); font-weight: 700; border-color: var(--amber); }
+.dp-day.arrival  { background: var(--amber); color: var(--surface-0); font-weight: 700; border-radius: var(--radius) 0 0 var(--radius); }
+.dp-day.departure{ background: var(--amber); color: var(--surface-0); font-weight: 700; border-radius: 0 var(--radius) var(--radius) 0; }
+.dp-day.arrival.departure { border-radius: var(--radius); }
+.dp-day.in-range { background: var(--amber-glow); color: var(--cream); border-radius: 0; }
 .dp-day.today { border-color: var(--amber-dim); }
-.dp-day.past { color: var(--cream-ghost); cursor: default; }
+.dp-day.past { color: rgba(240,232,212,0.15); cursor: default; }
 .dp-day.empty { cursor: default; }
 
-.dp-selected-display {
-  padding: 10px 16px;
-  border-top: 1px solid var(--rule);
-  font-family: var(--font-label);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  color: var(--amber);
-  min-height: 38px;
-  display: flex;
-  align-items: center;
+.dp-range-display {
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  padding: 10px 14px; border-top: 1px solid var(--rule);
+  gap: 8px; align-items: center; min-height: 42px;
 }
+.dp-range-item { display: flex; flex-direction: column; gap: 2px; }
+.dp-range-item.right { text-align: right; align-items: flex-end; }
+.dp-range-key {
+  font-family: var(--font-label); font-size: 7px; letter-spacing: 0.28em;
+  text-transform: uppercase; color: var(--amber-dim); font-weight: 500;
+}
+.dp-range-val {
+  font-size: 11px; color: var(--cream-dim); font-weight: 300;
+  transition: color 0.3s;
+}
+.dp-range-val.set { color: var(--cream); }
+.dp-range-sep {
+  font-family: var(--font-label); font-size: 9px; color: var(--rule-bright);
+  letter-spacing: 0.1em;
+}
+.dp-step-hint {
+  font-family: var(--font-label); font-size: 8px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--amber); text-align: center;
+  padding: 0 14px 10px;
+  transition: opacity 0.3s;
+}
+.dp-step-hint.hidden { opacity: 0; }
 
-/* BUTTONS */
+/* ── BUTTONS ── */
 .btn-primary {
-  width: 100%;
-  padding: 18px 32px;
+  width: 100%; padding: 18px 32px;
   background: linear-gradient(135deg, var(--amber) 0%, var(--amber-bright) 100%);
-  color: var(--surface-0);
-  border: none;
-  border-radius: var(--radius);
-  font-family: var(--font-label);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.26em;
-  text-transform: uppercase;
-  cursor: pointer;
+  color: var(--surface-0); border: none; border-radius: var(--radius);
+  font-family: var(--font-label); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.26em; text-transform: uppercase; cursor: pointer;
   transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s, filter 0.2s;
-  box-shadow: 0 4px 20px rgba(200,131,26,0.35);
-  position: relative;
-  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(200,131,26,0.35); position: relative; overflow: hidden;
 }
 .btn-primary::before {
-  content: '';
-  position: absolute;
-  inset: 0;
+  content: ''; position: absolute; inset: 0;
   background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
   pointer-events: none;
 }
 .btn-primary:active { transform: scale(0.97); box-shadow: 0 2px 10px rgba(200,131,26,0.25); }
-.btn-primary:hover { filter: brightness(1.08); }
-.btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary:hover  { filter: brightness(1.08); }
+.btn-primary:disabled { opacity: 0.3; cursor: not-allowed; filter: none; transform: none; }
 
 .btn-ghost {
-  background: none;
-  border: 1px solid var(--rule);
-  color: var(--cream-dim);
-  padding: 13px 24px;
-  border-radius: var(--radius);
-  font-family: var(--font-label);
-  font-size: 10px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  cursor: pointer;
+  background: none; border: 1px solid var(--rule); color: var(--cream-dim);
+  padding: 13px 24px; border-radius: var(--radius);
+  font-family: var(--font-label); font-size: 10px; letter-spacing: 0.22em;
+  text-transform: uppercase; cursor: pointer;
   transition: border-color 0.2s, color 0.2s, transform 0.15s;
 }
 .btn-ghost:active { transform: scale(0.97); }
-.btn-ghost:hover { border-color: var(--amber-dim); color: var(--cream); }
+.btn-ghost:hover  { border-color: var(--amber-dim); color: var(--cream); }
 
 .btn-back {
-  position: absolute;
-  top: 32px;
-  left: 32px;
-  background: none;
-  border: 1px solid var(--rule);
-  color: var(--cream-mute);
-  padding: 10px 16px;
-  border-radius: var(--radius);
-  font-family: var(--font-label);
-  font-size: 9px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: color 0.2s, border-color 0.2s;
-  z-index: 20;
+  position: absolute; top: 32px; left: 32px; background: none;
+  border: 1px solid var(--rule); color: var(--cream-mute); padding: 10px 16px;
+  border-radius: var(--radius); font-family: var(--font-label); font-size: 9px;
+  letter-spacing: 0.22em; text-transform: uppercase; cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  transition: color 0.2s, border-color 0.2s; z-index: 20;
 }
 .btn-back:hover { color: var(--cream); border-color: var(--amber-dim); }
 .btn-back::before { content: '←'; font-size: 12px; }
 
-@keyframes rise {
-  to { opacity: 1; transform: translateY(0); }
-}
+@keyframes rise { to { opacity: 1; transform: translateY(0); } }
 
 /* ── WAIVER SCREEN ── */
 #screen-waiver {
-  background: var(--surface-1);
-  padding: 0;
-  justify-content: flex-start;
-  align-items: stretch;
+  background: var(--surface-1); padding: 0;
+  justify-content: flex-start; align-items: stretch;
 }
 
 .waiver-progress {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--surface-3);
-  z-index: 30;
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--surface-3); z-index: 30;
 }
 .waiver-progress-bar {
   height: 100%;
   background: linear-gradient(90deg, var(--amber-dim), var(--amber));
-  transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
-  width: 0%;
+  transition: width 0.4s cubic-bezier(0.4,0,0.2,1); width: 0%;
 }
 
 .waiver-header {
-  position: relative;
-  padding: 56px 48px 32px;
-  border-bottom: 1px solid var(--rule);
-  flex-shrink: 0;
-  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-1) 100%);
-  z-index: 20;
+  position: relative; padding: 56px 48px 28px;
+  border-bottom: 1px solid var(--rule); flex-shrink: 0;
+  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-1) 100%); z-index: 20;
 }
 .waiver-header-eyebrow {
-  font-family: var(--font-label);
-  font-size: 8px;
-  letter-spacing: 0.38em;
-  text-transform: uppercase;
-  color: var(--amber);
-  margin-bottom: 12px;
+  font-family: var(--font-label); font-size: 8px; letter-spacing: 0.38em;
+  text-transform: uppercase; color: var(--amber); margin-bottom: 10px;
 }
 .waiver-header-title {
-  font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.05;
-  color: var(--cream);
+  font-family: var(--font-display); font-size: 28px; font-weight: 700;
+  line-height: 1.05; color: var(--cream);
 }
 .waiver-header-title em { font-style: italic; color: var(--amber); }
+.waiver-header-sub {
+  font-family: var(--font-label); font-size: 9px; letter-spacing: 0.1em;
+  color: var(--cream-mute); margin-top: 6px;
+}
 
 .waiver-scroll-area {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  padding: 40px 48px 80px;
-  position: relative;
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; padding: 36px 48px 80px; position: relative;
 }
 .waiver-scroll-area::-webkit-scrollbar { width: 3px; }
-.waiver-scroll-area::-webkit-scrollbar-track { background: transparent; }
 .waiver-scroll-area::-webkit-scrollbar-thumb { background: var(--amber-dim); border-radius: 2px; }
-
-/* SCROLL FADE INDICATOR */
 .waiver-scroll-area::after {
-  content: '';
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 80px;
+  content: ''; position: sticky; bottom: 0; left: 0; right: 0; height: 80px;
   background: linear-gradient(to bottom, transparent, var(--surface-1));
-  display: block;
-  pointer-events: none;
-  margin-top: -80px;
-  z-index: 10;
+  display: block; pointer-events: none; margin-top: -80px; z-index: 10;
 }
 
-/* LEGAL COPY */
 .waiver-intro {
-  font-size: 10px;
-  font-family: var(--font-label);
-  letter-spacing: 0.06em;
-  color: var(--cream-mute);
-  line-height: 1.7;
-  padding: 20px 0 28px;
-  border-bottom: 1px solid var(--rule);
-  margin-bottom: 32px;
+  font-size: 10px; font-family: var(--font-label); letter-spacing: 0.06em;
+  color: var(--cream-mute); line-height: 1.7;
+  padding: 16px 0 24px; border-bottom: 1px solid var(--rule); margin-bottom: 28px;
 }
 .waiver-intro strong { color: var(--cream-dim); font-weight: 500; }
 
 .waiver-section {
-  margin-bottom: 28px;
-  opacity: 0;
-  transform: translateY(10px);
+  margin-bottom: 24px; opacity: 0; transform: translateY(10px);
   transition: opacity 0.5s ease, transform 0.5s ease;
 }
 .waiver-section.visible { opacity: 1; transform: translateY(0); }
 
 .waiver-section-num {
-  font-family: var(--font-label);
-  font-size: 7px;
-  letter-spacing: 0.36em;
-  text-transform: uppercase;
-  color: var(--amber-dim);
-  margin-bottom: 8px;
-  font-weight: 500;
+  font-family: var(--font-label); font-size: 7px; letter-spacing: 0.36em;
+  text-transform: uppercase; color: var(--amber-dim); margin-bottom: 6px; font-weight: 500;
 }
 .waiver-section-title {
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--cream);
-  margin-bottom: 10px;
-  letter-spacing: 0.01em;
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  color: var(--cream); margin-bottom: 10px; letter-spacing: 0.01em;
 }
 .waiver-section-body {
-  font-size: 12px;
-  font-weight: 300;
-  color: var(--cream-dim);
-  line-height: 1.8;
+  font-size: 12px; font-weight: 300; color: var(--cream-dim); line-height: 1.8;
 }
-.waiver-section-body ul {
-  list-style: none;
-  margin-top: 8px;
-}
+.waiver-section-body ul { list-style: none; margin-top: 6px; }
 .waiver-section-body ul li {
-  padding: 5px 0 5px 16px;
-  position: relative;
-  border-bottom: 1px solid rgba(200,131,26,0.06);
-  font-size: 12px;
+  padding: 5px 0 5px 16px; position: relative;
+  border-bottom: 1px solid rgba(200,131,26,0.06); font-size: 12px;
 }
 .waiver-section-body ul li:last-child { border-bottom: none; }
 .waiver-section-body ul li::before {
-  content: '—';
-  position: absolute;
-  left: 0;
-  color: var(--amber-dim);
-  font-size: 10px;
+  content: '—'; position: absolute; left: 0; color: var(--amber-dim); font-size: 10px;
+}
+
+/* Express negligence callout */
+.negligence-callout {
+  border: 1px solid var(--rule-bright); border-radius: var(--radius);
+  padding: 16px 18px; margin-bottom: 10px;
+  background: rgba(200,131,26,0.04);
+}
+.negligence-callout-label {
+  font-family: var(--font-label); font-size: 8px; letter-spacing: 0.32em;
+  text-transform: uppercase; color: var(--amber); margin-bottom: 12px; font-weight: 600;
 }
 
 .defs-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  overflow: hidden;
-  margin-top: 12px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+  border: 1px solid var(--rule); border-radius: var(--radius); overflow: hidden; margin-top: 10px;
 }
 .def-item {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--rule);
-  border-right: 1px solid var(--rule);
+  padding: 10px 12px; border-bottom: 1px solid var(--rule); border-right: 1px solid var(--rule);
 }
 .def-item:nth-child(even) { border-right: none; }
 .def-item:nth-last-child(-n+2) { border-bottom: none; }
 .def-term {
-  font-family: var(--font-label);
-  font-size: 8px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--amber);
-  margin-bottom: 3px;
-  font-weight: 500;
+  font-family: var(--font-label); font-size: 8px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--amber); margin-bottom: 3px; font-weight: 500;
 }
 .def-body { font-size: 11px; color: var(--cream-dim); line-height: 1.5; }
 
 .waiver-footer-bar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 16px 48px;
+  position: absolute; bottom: 0; left: 0; right: 0; padding: 14px 48px;
   background: linear-gradient(to top, var(--surface-1) 70%, transparent);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  z-index: 20;
+  display: flex; align-items: center; justify-content: space-between; z-index: 20;
 }
-
 .scroll-hint {
-  font-family: var(--font-label);
-  font-size: 8px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--cream-mute);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: opacity 0.4s;
+  font-family: var(--font-label); font-size: 8px; letter-spacing: 0.24em;
+  text-transform: uppercase; color: var(--cream-mute);
+  display: flex; align-items: center; gap: 8px; transition: opacity 0.4s;
 }
 .scroll-hint.hidden { opacity: 0; }
 .scroll-hint::after { content: '↓'; font-size: 10px; color: var(--amber-dim); animation: bounce 1.5s ease-in-out infinite; }
@@ -592,404 +394,173 @@ body::after {
 
 /* ── SIGN SCREEN ── */
 #screen-sign {
-  background: var(--surface-1);
-  padding: 0;
-  justify-content: flex-start;
-  align-items: stretch;
+  background: var(--surface-1); padding: 0;
+  justify-content: flex-start; align-items: stretch;
 }
-
 .sign-header {
-  padding: 56px 48px 28px;
-  border-bottom: 1px solid var(--rule);
-  flex-shrink: 0;
+  padding: 56px 48px 24px; border-bottom: 1px solid var(--rule); flex-shrink: 0;
   background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-1) 100%);
 }
 .sign-header-eyebrow {
-  font-family: var(--font-label);
-  font-size: 8px;
-  letter-spacing: 0.38em;
-  text-transform: uppercase;
-  color: var(--amber);
-  margin-bottom: 10px;
+  font-family: var(--font-label); font-size: 8px; letter-spacing: 0.38em;
+  text-transform: uppercase; color: var(--amber); margin-bottom: 8px;
 }
 .sign-header-title {
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--cream);
-  line-height: 1.1;
+  font-family: var(--font-display); font-size: 26px; font-weight: 700;
+  color: var(--cream); line-height: 1.1;
 }
-
 .sign-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 32px 48px;
-  gap: 24px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  flex: 1; display: flex; flex-direction: column; padding: 28px 48px;
+  gap: 20px; overflow-y: auto; -webkit-overflow-scrolling: touch;
 }
-
-.sign-name-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
+.sign-name-field { display: flex; flex-direction: column; gap: 8px; }
 .sign-input {
-  width: 100%;
-  padding: 14px 18px;
-  background: var(--surface-3);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  color: var(--cream);
-  font-family: var(--font-body);
-  font-size: 16px;
-  font-weight: 300;
+  width: 100%; padding: 14px 18px; background: var(--surface-3);
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  color: var(--cream); font-family: var(--font-body); font-size: 16px; font-weight: 300;
   transition: border-color 0.25s, box-shadow 0.25s;
 }
 .sign-input::placeholder { color: var(--cream-mute); }
 .sign-input:focus { outline: none; border-color: var(--amber); box-shadow: 0 0 0 3px var(--amber-glow); }
-
 .sign-canvas-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-height: 200px;
+  flex: 1; display: flex; flex-direction: column; gap: 8px; min-height: 180px;
 }
-
 .canvas-container {
-  flex: 1;
-  position: relative;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: var(--surface-0);
-  min-height: 180px;
-  cursor: crosshair;
+  flex: 1; position: relative; border: 1px solid var(--rule); border-radius: var(--radius);
+  overflow: hidden; background: var(--surface-0); min-height: 160px; cursor: crosshair;
   transition: border-color 0.25s;
 }
 .canvas-container.has-sig { border-color: var(--amber-dim); }
-
-.canvas-container canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-  touch-action: none;
-}
-
+.canvas-container canvas { width: 100%; height: 100%; display: block; touch-action: none; }
 .canvas-hint {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  transition: opacity 0.3s;
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  pointer-events: none; transition: opacity 0.3s;
 }
 .canvas-hint-text {
-  font-family: var(--font-label);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--cream-ghost);
-  font-weight: 500;
+  font-family: var(--font-label); font-size: 10px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--cream-ghost); font-weight: 500;
 }
-
-.canvas-tools {
-  display: flex;
-  justify-content: flex-end;
-}
+.canvas-tools { display: flex; justify-content: flex-end; }
 .btn-clear {
-  background: none;
-  border: none;
-  color: var(--amber-dim);
-  font-family: var(--font-label);
-  font-size: 9px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  cursor: pointer;
-  padding: 6px 12px;
-  transition: color 0.2s;
-  border-radius: var(--radius);
+  background: none; border: none; color: var(--amber-dim);
+  font-family: var(--font-label); font-size: 9px; letter-spacing: 0.2em;
+  text-transform: uppercase; cursor: pointer; padding: 6px 12px;
+  transition: color 0.2s; border-radius: var(--radius);
 }
 .btn-clear:hover { color: var(--amber); }
-
 .sign-agree-text {
-  font-size: 11px;
-  color: var(--cream-mute);
-  line-height: 1.7;
-  font-style: italic;
-  text-align: center;
-  padding: 0 8px;
+  font-size: 11px; color: var(--cream-mute); line-height: 1.7;
+  font-style: italic; text-align: center; padding: 0 8px;
 }
-
-.sign-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-bottom: 8px;
-  flex-shrink: 0;
-}
+.sign-actions { display: flex; flex-direction: column; gap: 10px; padding-bottom: 8px; flex-shrink: 0; }
 
 /* ── CONFIRM SCREEN ── */
 #screen-confirm {
-  background: var(--surface-1);
-  padding: 48px 40px;
-  gap: 0;
-  text-align: center;
+  background: var(--surface-1); padding: 48px 40px; gap: 0; text-align: center;
 }
-
 .confirm-icon {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  border: 1px solid var(--amber);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 32px;
-  position: relative;
-  opacity: 0;
-  transform: scale(0.8);
+  width: 72px; height: 72px; border-radius: 50%; border: 1px solid var(--amber);
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 28px;
+  position: relative; opacity: 0; transform: scale(0.8);
   transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34,1.56,0.64,1);
 }
 #screen-confirm.active .confirm-icon { opacity: 1; transform: scale(1); transition-delay: 0.1s; }
 .confirm-icon::before {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
+  content: ''; position: absolute; inset: -4px; border-radius: 50%;
   border: 1px solid rgba(200,131,26,0.15);
 }
-.confirm-checkmark {
-  font-size: 28px;
-  color: var(--amber);
-  line-height: 1;
-}
-
+.confirm-checkmark { font-size: 28px; color: var(--amber); line-height: 1; }
 .confirm-title {
-  font-family: var(--font-display);
-  font-size: 36px;
-  font-weight: 700;
-  color: var(--cream);
-  line-height: 1.05;
-  margin-bottom: 8px;
-  opacity: 0;
-  transform: translateY(16px);
+  font-family: var(--font-display); font-size: 36px; font-weight: 700;
+  color: var(--cream); line-height: 1.05; margin-bottom: 8px;
+  opacity: 0; transform: translateY(16px);
   transition: opacity 0.5s ease, transform 0.5s ease;
 }
 #screen-confirm.active .confirm-title { opacity: 1; transform: translateY(0); transition-delay: 0.2s; }
 .confirm-title em { font-style: italic; color: var(--amber); }
-
 .confirm-name {
-  font-family: var(--font-label);
-  font-size: 10px;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: var(--amber);
-  margin-bottom: 24px;
-  opacity: 0;
-  transition: opacity 0.4s ease;
+  font-family: var(--font-label); font-size: 10px; letter-spacing: 0.28em;
+  text-transform: uppercase; color: var(--amber); margin-bottom: 20px;
+  opacity: 0; transition: opacity 0.4s ease;
 }
 #screen-confirm.active .confirm-name { opacity: 1; transition-delay: 0.35s; }
-
 .confirm-rule {
-  width: 40px;
-  height: 1px;
-  background: var(--rule-bright);
-  margin: 0 auto 24px;
-  opacity: 0;
-  transition: opacity 0.4s ease;
+  width: 40px; height: 1px; background: var(--rule-bright); margin: 0 auto 20px;
+  opacity: 0; transition: opacity 0.4s ease;
 }
 #screen-confirm.active .confirm-rule { opacity: 1; transition-delay: 0.4s; }
-
 .confirm-sub {
-  font-size: 13px;
-  color: var(--cream-dim);
-  line-height: 1.7;
-  max-width: 300px;
-  margin: 0 auto 48px;
-  opacity: 0;
-  transition: opacity 0.4s ease;
+  font-size: 13px; color: var(--cream-dim); line-height: 1.7; max-width: 300px;
+  margin: 0 auto 40px; opacity: 0; transition: opacity 0.4s ease;
 }
 #screen-confirm.active .confirm-sub { opacity: 1; transition-delay: 0.45s; }
-
 .confirm-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
-  max-width: 360px;
-  opacity: 0;
-  transition: opacity 0.4s ease;
+  display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 360px;
+  opacity: 0; transition: opacity 0.4s ease;
 }
 #screen-confirm.active .confirm-actions { opacity: 1; transition-delay: 0.55s; }
 
 /* ── LOG SCREEN ── */
 #screen-log {
-  background: var(--surface-0);
-  padding: 0;
-  justify-content: flex-start;
-  align-items: stretch;
+  background: var(--surface-0); padding: 0;
+  justify-content: flex-start; align-items: stretch;
 }
-
 .log-header {
-  padding: 56px 48px 28px;
-  border-bottom: 1px solid var(--rule);
-  flex-shrink: 0;
+  padding: 56px 48px 28px; border-bottom: 1px solid var(--rule); flex-shrink: 0;
   background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-0) 100%);
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
+  display: flex; justify-content: space-between; align-items: flex-end;
 }
 .log-header-left { flex: 1; }
 .log-header-eyebrow {
-  font-family: var(--font-label);
-  font-size: 8px;
-  letter-spacing: 0.38em;
-  text-transform: uppercase;
-  color: var(--amber);
-  margin-bottom: 10px;
+  font-family: var(--font-label); font-size: 8px; letter-spacing: 0.38em;
+  text-transform: uppercase; color: var(--amber); margin-bottom: 10px;
 }
 .log-header-title {
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--cream);
-  line-height: 1.1;
+  font-family: var(--font-display); font-size: 26px; font-weight: 700;
+  color: var(--cream); line-height: 1.1;
 }
-.log-count {
-  font-family: var(--font-label);
-  font-size: 9px;
-  letter-spacing: 0.2em;
-  color: var(--cream-mute);
-  text-align: right;
-}
-.log-count span {
-  display: block;
-  font-size: 32px;
-  font-weight: 600;
-  color: var(--amber);
-  letter-spacing: -0.02em;
-  line-height: 1;
-  font-family: 'Archivo Narrow', sans-serif;
-}
-
-.log-list {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 24px 48px 100px;
-}
+.log-count { font-family: var(--font-label); font-size: 9px; letter-spacing: 0.2em; color: var(--cream-mute); text-align: right; }
+.log-count span { display: block; font-size: 32px; font-weight: 600; color: var(--amber); letter-spacing: -0.02em; line-height: 1; font-family: 'Archivo Narrow', sans-serif; }
+.log-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 24px 48px 100px; }
 .log-list::-webkit-scrollbar { width: 3px; }
 .log-list::-webkit-scrollbar-thumb { background: var(--amber-dim); border-radius: 2px; }
-
-.log-empty {
-  padding: 48px 0;
-  text-align: center;
-  color: var(--cream-mute);
-  font-size: 13px;
-  font-style: italic;
-}
-
+.log-empty { padding: 48px 0; text-align: center; color: var(--cream-mute); font-size: 13px; font-style: italic; }
 .log-entry {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  padding: 18px 0;
-  border-bottom: 1px solid var(--rule);
-  gap: 16px;
-  align-items: center;
-  opacity: 0;
-  animation: slideIn 0.4s ease forwards;
+  display: grid; grid-template-columns: 1fr auto; padding: 16px 0;
+  border-bottom: 1px solid var(--rule); gap: 16px; align-items: center;
+  opacity: 0; animation: slideIn 0.4s ease forwards;
 }
 @keyframes slideIn { to { opacity: 1; } }
-
-.log-name {
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 400;
-  color: var(--cream);
-  margin-bottom: 3px;
-}
-.log-meta {
-  font-family: var(--font-label);
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  color: var(--cream-mute);
-  text-transform: uppercase;
-}
+.log-name { font-family: var(--font-display); font-size: 17px; font-weight: 400; color: var(--cream); margin-bottom: 3px; }
+.log-meta { font-family: var(--font-label); font-size: 9px; letter-spacing: 0.12em; color: var(--cream-mute); text-transform: uppercase; }
 .log-badge {
-  font-family: var(--font-label);
-  font-size: 8px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--surface-0);
-  background: var(--amber);
-  padding: 4px 10px;
-  border-radius: 2px;
-  white-space: nowrap;
+  font-family: var(--font-label); font-size: 8px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--surface-0); background: var(--amber);
+  padding: 4px 10px; border-radius: 2px; white-space: nowrap;
 }
-
 .log-footer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 20px 48px;
-  background: linear-gradient(to top, var(--surface-0) 60%, transparent);
-  display: flex;
-  gap: 12px;
+  position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 48px;
+  background: linear-gradient(to top, var(--surface-0) 60%, transparent); display: flex; gap: 12px;
 }
 
-/* ── DECORATIVE ELEMENTS ── */
+/* ── DECORATIVE ── */
 .tiki-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--rule-bright);
-  border-radius: 50%;
-  margin-bottom: 24px;
-  position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border: 1px solid var(--rule-bright); border-radius: 50%;
+  margin-bottom: 20px; position: relative; flex-shrink: 0;
 }
-.tiki-mark::before {
-  content: '';
-  width: 10px;
-  height: 10px;
-  background: var(--amber);
-  border-radius: 50%;
-}
-.tiki-mark::after {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-  border: 1px solid var(--rule);
-}
+.tiki-mark::before { content: ''; width: 9px; height: 9px; background: var(--amber); border-radius: 50%; }
+.tiki-mark::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 1px solid var(--rule); }
 
 /* ── TOAST ── */
 .toast {
-  position: fixed;
-  bottom: 32px;
-  left: 50%;
+  position: fixed; bottom: 32px; left: 50%;
   transform: translateX(-50%) translateY(80px);
-  background: var(--surface-4);
-  border: 1px solid var(--amber-dim);
-  border-radius: var(--radius);
-  padding: 12px 24px;
-  font-family: var(--font-label);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--amber);
-  z-index: 100;
-  white-space: nowrap;
-  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s;
-  opacity: 0;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  background: var(--surface-4); border: 1px solid var(--amber-dim); border-radius: var(--radius);
+  padding: 12px 24px; font-family: var(--font-label); font-size: 10px;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--amber); z-index: 100;
+  white-space: nowrap; transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s;
+  opacity: 0; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
 }
 .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 </style>
@@ -1003,6 +574,7 @@ body::after {
      SCREEN 1 — LANDING
 ══════════════════════════════════════ -->
 <div id="screen-landing" class="screen active">
+  <div class="landing-spacer"></div>
   <div class="tiki-mark"></div>
   <div class="landing-eyebrow">Guest Check-In</div>
   <h1 class="landing-title">Tiki<br><em>House.</em></h1>
@@ -1035,7 +607,18 @@ body::after {
           <button class="dp-nav" id="dp-next" aria-label="Next month">›</button>
         </div>
         <div class="dp-grid" id="dp-grid"></div>
-        <div class="dp-selected-display" id="dp-selected-display">Tap your arrival date</div>
+        <div class="dp-range-display">
+          <div class="dp-range-item">
+            <span class="dp-range-key">Arrival</span>
+            <span class="dp-range-val" id="dp-arrival-val">—</span>
+          </div>
+          <span class="dp-range-sep">→</span>
+          <div class="dp-range-item right">
+            <span class="dp-range-key">Departure</span>
+            <span class="dp-range-val" id="dp-departure-val">—</span>
+          </div>
+        </div>
+        <div class="dp-step-hint" id="dp-step-hint">Tap arrival date</div>
       </div>
     </div>
 
@@ -1044,6 +627,7 @@ body::after {
       <button class="btn-ghost" id="btn-view-log">View Signed Log</button>
     </div>
   </div>
+  <div class="landing-spacer"></div>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -1054,13 +638,13 @@ body::after {
   <button class="btn-back" id="btn-waiver-back">Back</button>
 
   <div class="waiver-header">
-    <div class="waiver-header-eyebrow">Tiki House — Guest Waiver</div>
-    <div class="waiver-header-title">All-Pro Auto<br>Reconditioning<em>, LLC</em></div>
+    <div class="waiver-header-eyebrow">Guest Liability Waiver &amp; Acknowledgment</div>
+    <div class="waiver-header-title">Tiki<br><em>House.</em></div>
+    <div class="waiver-header-sub">Operated by All-Pro Auto Reconditioning, LLC</div>
   </div>
 
   <div class="waiver-scroll-area" id="waiver-scroll-area">
     <div class="waiver-intro">
-      <strong>Property Owner:</strong> All-Pro Auto Reconditioning, LLC &nbsp;·&nbsp; <strong>Property:</strong> Tiki House &nbsp;·&nbsp; <strong>Form:</strong> Guest Liability Waiver &amp; Acknowledgment<br><br>
       This Guest Waiver Form ("Waiver") shall be executed by each Guest prior to entering the Property. By signing below, the Guest acknowledges and agrees to all terms set forth herein as a condition of access.
     </div>
 
@@ -1070,11 +654,13 @@ body::after {
       <div class="waiver-section-title">Definitions</div>
       <div class="defs-grid">
         <div class="def-item"><div class="def-term">Approved User</div><div class="def-body">The individual authorized by Ownership for this stay.</div></div>
-        <div class="def-item"><div class="def-term">Company</div><div class="def-body">All-Pro Auto Reconditioning, LLC.</div></div>
+        <div class="def-item"><div class="def-term">Company</div><div class="def-body">All-Pro Auto Reconditioning, LLC, which leases and operates the Property.</div></div>
         <div class="def-item"><div class="def-term">Guest</div><div class="def-body">Individual executing this Waiver — visitor in company of Approved User.</div></div>
+        <div class="def-item"><div class="def-term">Owner</div><div class="def-body">The individual who holds title to the Property, whose identity is known to the Company.</div></div>
         <div class="def-item"><div class="def-term">Ownership</div><div class="def-body">Principals and executive leadership of the Company.</div></div>
-        <div class="def-item"><div class="def-term">Property</div><div class="def-body">Company-owned residential property known as the Tiki House.</div></div>
-        <div class="def-item"><div class="def-term">Watercraft</div><div class="def-body">Any boat, PWC, kayak, paddleboard, or vessel at the Property.</div></div>
+        <div class="def-item"><div class="def-term">Property</div><div class="def-body">The residential property known as the Tiki House, leased and operated by the Company.</div></div>
+        <div class="def-item"><div class="def-term">Use Policy</div><div class="def-body">Tiki House Use Policy &amp; Agreement, governing document for Approved Users.</div></div>
+        <div class="def-item"><div class="def-term">Watercraft</div><div class="def-body">Any boat, PWC, kayak, paddleboard, or vessel associated with the Property.</div></div>
       </div>
     </div>
 
@@ -1082,170 +668,163 @@ body::after {
     <div class="waiver-section">
       <div class="waiver-section-num">Section 1</div>
       <div class="waiver-section-title">Guest Acknowledgment</div>
-      <div class="waiver-section-body">
-        <ul>
-          <li>The Guest is accessing the Property solely as a visitor accompanying an Approved User and has no independent right of access.</li>
-          <li>The Guest understands that the Property is a Company-owned asset and that all access is a privilege subject to the Use Policy and this Waiver.</li>
-          <li>The Guest agrees to conduct themselves in a manner consistent with the Use Policy and to follow all reasonable directions of the Approved User and Ownership.</li>
-        </ul>
-      </div>
+      <div class="waiver-section-body"><ul>
+        <li>The Guest is accessing the Property solely as a visitor accompanying an Approved User and has no independent right of access.</li>
+        <li>The Guest understands that the Property is a Company-operated asset and that all access is a privilege subject to the Use Policy and this Waiver.</li>
+        <li>The Guest agrees to conduct themselves consistently with the Use Policy and to follow all reasonable directions of the Approved User and Ownership.</li>
+      </ul></div>
     </div>
 
     <!-- 2 -->
     <div class="waiver-section">
       <div class="waiver-section-num">Section 2</div>
       <div class="waiver-section-title">Property Rules &amp; Care Standards</div>
-      <div class="waiver-section-body">
-        <ul>
-          <li>No glitter, confetti, beads, or similar materials anywhere on the Property.</li>
-          <li>No taping, pinning, nailing, or fastening anything to walls, ceilings, doors, furniture, or fixtures.</li>
-          <li>No food shall be left behind in any area of the Property.</li>
-          <li>No personal belongings shall be left behind upon departure.</li>
-          <li>No furniture shall be rearranged or the layout of the Property altered.</li>
-          <li>No permanent or semi-permanent modifications to the Property are permitted.</li>
-          <li>The Master Bedroom shall not be used unless Ownership has granted written approval for that specific stay.</li>
-        </ul>
-      </div>
+      <div class="waiver-section-body"><ul>
+        <li>No glitter, confetti, beads, or similar materials anywhere on the Property.</li>
+        <li>No taping, pinning, nailing, or fastening anything to walls, ceilings, doors, furniture, or fixtures.</li>
+        <li>No food shall be left behind in any area of the Property, including the refrigerator, counters, or exterior spaces.</li>
+        <li>No personal belongings shall be left behind upon departure.</li>
+        <li>No furniture shall be rearranged or the layout of the Property altered.</li>
+        <li>No permanent or semi-permanent modifications to the Property are permitted.</li>
+        <li>The Master Bedroom shall not be used unless Ownership has granted written approval for that specific stay.</li>
+      </ul></div>
     </div>
 
     <!-- 3 -->
     <div class="waiver-section">
       <div class="waiver-section-num">Section 3</div>
       <div class="waiver-section-title">Prohibited Uses</div>
-      <div class="waiver-section-body">
-        <ul>
-          <li>Parties or events exceeding 20 persons in total.</li>
-          <li>Commercial activities of any kind.</li>
-          <li>Inviting or admitting individuals not authorized by Ownership.</li>
-          <li>Any activity that creates excessive liability risk, noise complaints after 11PM, or undue exposure of the Property.</li>
-        </ul>
-      </div>
+      <div class="waiver-section-body"><ul>
+        <li>Parties or events exceeding 20 persons in total.</li>
+        <li>Commercial activities of any kind.</li>
+        <li>Inviting or admitting individuals not authorized by Ownership.</li>
+        <li>Any activity that creates excessive liability risk, noise complaints after 11PM, or undue exposure of the Property.</li>
+      </ul></div>
     </div>
 
     <!-- 4 -->
     <div class="waiver-section">
       <div class="waiver-section-num">Section 4</div>
       <div class="waiver-section-title">Smoking Policy</div>
-      <div class="waiver-section-body">
-        <ul>
-          <li>Smoking of any kind is strictly prohibited inside the Property — cigarettes, cigars, vapes, e-cigarettes, and cannabis products.</li>
-          <li>Smoking is permitted only in designated outdoor areas. All materials shall be fully extinguished and deposited in proper receptacles.</li>
-          <li>Any evidence of indoor smoking shall result in charges and remediation costs billed through the Approved User.</li>
-        </ul>
-      </div>
+      <div class="waiver-section-body"><ul>
+        <li>Smoking of any kind is strictly prohibited inside the Property — cigarettes, cigars, vapes, e-cigarettes, and cannabis products.</li>
+        <li>Smoking is permitted only in designated outdoor areas. All materials shall be fully extinguished and deposited in proper receptacles.</li>
+        <li>Any evidence of indoor smoking shall result in charges and remediation costs billed through the Approved User.</li>
+      </ul></div>
     </div>
 
     <!-- 5 -->
     <div class="waiver-section">
       <div class="waiver-section-num">Section 5</div>
       <div class="waiver-section-title">Prohibited Items</div>
-      <div class="waiver-section-body">
-        <ul>
-          <li>The Guest shall not leave any contraband, controlled substances, drugs, or drug paraphernalia — whether legal or illegal — on the Property at any time.</li>
-          <li>The Guest shall ensure all such items are removed from the Property upon departure. Violations may result in financial liability and removal from the Property.</li>
-        </ul>
-      </div>
+      <div class="waiver-section-body"><ul>
+        <li>The Guest shall not leave any contraband, controlled substances, drugs, or drug paraphernalia — whether legal or illegal — on the Property at any time.</li>
+        <li>The Guest shall ensure all such items are removed from the Property upon departure. Violations may result in financial liability and removal from the Property.</li>
+      </ul></div>
     </div>
 
     <!-- 6 -->
     <div class="waiver-section">
       <div class="waiver-section-num">Section 6</div>
       <div class="waiver-section-title">Watercraft</div>
-      <div class="waiver-section-body">
-        <ul>
-          <li>Use of Watercraft is subject to advance written approval by Ownership and is not guaranteed as part of Property access.</li>
-          <li>The Guest shall use all required safety equipment, including life jackets where applicable.</li>
-          <li>All children shall wear life jackets at all times while on Watercraft or docks.</li>
-          <li>No Watercraft shall be operated by the Guest under the influence of alcohol, drugs, or any impairing substance.</li>
-          <li>The Company assumes no liability for injuries, accidents, or losses related to Watercraft use. All risk is assumed by the Guest and Approved User.</li>
-        </ul>
-      </div>
+      <div class="waiver-section-body"><ul>
+        <li>Use of Watercraft is subject to advance written approval by Ownership and is not guaranteed as part of Property access.</li>
+        <li>The Guest shall use all required safety equipment, including life jackets where applicable.</li>
+        <li>All children shall wear life jackets at all times while on Watercraft or docks.</li>
+        <li>No Watercraft shall be operated by the Guest under the influence of alcohol, drugs, or any impairing substance.</li>
+        <li>The Company and Owner assume no liability for injuries, accidents, or losses related to Watercraft use. All risk is assumed by the Guest and the Approved User.</li>
+      </ul></div>
     </div>
 
     <!-- 7 -->
     <div class="waiver-section">
       <div class="waiver-section-num">Section 7</div>
       <div class="waiver-section-title">Financial Responsibility</div>
-      <div class="waiver-section-body">
-        <ul>
-          <li>Any damage caused by the Guest to the Property, its contents, any Watercraft, or pool and hot tub equipment may result in financial liability to the Approved User, and the Guest agrees to cooperate fully in any damage assessment.</li>
-          <li>Violations of this Waiver may result in the Guest's removal from the Property and the potential loss of future access for the Approved User.</li>
-        </ul>
-      </div>
+      <div class="waiver-section-body"><ul>
+        <li>Any damage caused by the Guest to the Property, its contents, any Watercraft, or pool and hot tub equipment may result in financial liability to the Approved User. The Guest agrees to cooperate fully in any damage assessment.</li>
+        <li>Violations of this Waiver may result in the Guest's removal from the Property and the potential loss of future access for the Approved User.</li>
+      </ul></div>
     </div>
 
     <!-- 8 -->
     <div class="waiver-section">
       <div class="waiver-section-num">Section 8</div>
       <div class="waiver-section-title">Pets</div>
-      <div class="waiver-section-body">
-        <ul>
-          <li>Pets are not permitted on the Property unless the Approved User has received prior written approval from Ownership for the specific stay.</li>
-          <li>Approved pets are not permitted on furniture, bedding, or in the Master Bedroom under any circumstances.</li>
-          <li>Any damage caused by a Pet brought by the Guest shall be the financial responsibility of the Approved User.</li>
-        </ul>
-      </div>
+      <div class="waiver-section-body"><ul>
+        <li>Pets are not permitted on the Property unless the Approved User has received prior written approval from Ownership for the specific stay.</li>
+        <li>Approved pets are not permitted on furniture, bedding, or in the Master Bedroom under any circumstances.</li>
+        <li>Any damage caused by a Pet brought by the Guest shall be the financial responsibility of the Approved User.</li>
+      </ul></div>
     </div>
 
     <!-- 9 -->
     <div class="waiver-section">
       <div class="waiver-section-num">Section 9</div>
       <div class="waiver-section-title">Occupancy &amp; Vehicles</div>
-      <div class="waiver-section-body">
-        <ul>
-          <li>The maximum overnight occupancy is limited per the Use Policy. The Guest shall not admit or invite additional individuals beyond that limit.</li>
-          <li>All vehicles shall be parked in designated areas only. Boats on trailers, RVs, and oversized vehicles require prior written approval from Ownership.</li>
-        </ul>
-      </div>
+      <div class="waiver-section-body"><ul>
+        <li>The maximum overnight occupancy of the Property is subject to the Use Policy. The Guest shall not admit or invite additional individuals beyond the permitted limit.</li>
+        <li>All vehicles shall be parked in designated areas only. Boats on trailers, RVs, and oversized vehicles require prior written approval from Ownership.</li>
+      </ul></div>
     </div>
 
     <!-- 10 -->
     <div class="waiver-section">
       <div class="waiver-section-num">Section 10</div>
       <div class="waiver-section-title">Pool &amp; Hot Tub</div>
-      <div class="waiver-section-body">
-        <ul>
-          <li>Pool and hot tub use is at the Guest's sole risk. The Company assumes no liability for any injury, accident, or loss arising from use.</li>
-          <li>Pool and hot tub hours are 7:00 AM – 10:00 PM. Glass containers are prohibited in and around these areas at all times.</li>
-          <li>Children shall be supervised by a responsible adult at all times while in or near the pool or hot tub.</li>
-          <li>The Guest shall not tamper with or add chemicals to the pool or hot tub system.</li>
-        </ul>
-      </div>
+      <div class="waiver-section-body"><ul>
+        <li>Pool and hot tub use is at the Guest's sole risk. The Company and Owner assume no liability for any injury, accident, or loss arising from use.</li>
+        <li>Pool and hot tub hours are 7:00 AM – 10:00 PM. Glass containers are prohibited in and around these areas at all times.</li>
+        <li>Children shall be supervised by a responsible adult at all times while in or near the pool or hot tub.</li>
+        <li>The Guest shall not tamper with or add chemicals to the pool or hot tub system.</li>
+      </ul></div>
     </div>
 
     <!-- 11 -->
     <div class="waiver-section">
       <div class="waiver-section-num">Section 11</div>
       <div class="waiver-section-title">Emergency Protocols</div>
-      <div class="waiver-section-body">
-        <ul>
-          <li>In the event of a Property emergency, the Guest shall notify the Approved User immediately so that Ownership can be contacted.</li>
-          <li>The Guest shall not authorize repair services or take actions affecting Property systems without direction from the Approved User or Ownership.</li>
-        </ul>
-      </div>
+      <div class="waiver-section-body"><ul>
+        <li>In the event of a Property emergency, the Guest shall notify the Approved User immediately so that Ownership can be contacted.</li>
+        <li>The Guest shall not authorize repair services or take actions affecting Property systems without direction from the Approved User or Ownership.</li>
+      </ul></div>
     </div>
 
-    <!-- 12 — THE BIG ONE -->
+    <!-- 12 — EXPRESS NEGLIGENCE -->
     <div class="waiver-section">
-      <div class="waiver-section-num">Section 12 — Critical</div>
+      <div class="waiver-section-num">Section 12 — Read Carefully</div>
       <div class="waiver-section-title">Assumption of Risk, Release &amp; Indemnification</div>
       <div class="waiver-section-body">
-        <ul>
-          <li>The Guest enters and uses the Property — including all indoor areas, outdoor areas, water access points, docks, recreational features, and any Watercraft — voluntarily and at their own sole risk.</li>
-          <li>The Guest accepts the Property in its current, as-is condition and assumes all risk associated with its physical features, layout, recreational amenities, and any pre-existing conditions, whether known or unknown.</li>
-          <li>The Company shall not be liable for any injury, illness, death, loss, or damage sustained by the Guest arising from use of the Property, including claims arising from the Company's own negligence, except in cases of the Company's gross negligence or willful misconduct.</li>
-          <li>The Company bears no liability for any injury, incident, or damage in which the voluntary consumption of alcohol, cannabis, or any impairing substance by the Guest was a contributing factor.</li>
-          <li>The Guest hereby releases, discharges, and holds harmless the Company, Ownership, and their respective officers, agents, and representatives from any and all claims, demands, losses, and liabilities arising out of or relating to the Guest's presence at or use of the Property.</li>
-          <li>The Guest agrees to indemnify and defend the Company and Ownership against any claim, loss, damage, or expense (including reasonable attorneys' fees) arising from the Guest's conduct, negligence, or violation of this Waiver.</li>
-        </ul>
+        <div class="negligence-callout">
+          <div class="negligence-callout-label">Express Negligence &amp; Release — Read Carefully</div>
+          <ul>
+            <li>The Guest enters and uses the Property — including all indoor and outdoor areas, water access points, docks, recreational features, and any Watercraft — voluntarily and at their own sole risk.</li>
+            <li>The Guest accepts the Property in its current, as-is condition and assumes all risk associated with its features, layout, amenities, and any pre-existing conditions, whether known or unknown.</li>
+            <li>The Company and Owner shall not be liable for any injury, illness, death, loss, or damage sustained by the Guest arising from use of the Property, including claims arising from the Company's own negligence, except in cases of gross negligence or willful misconduct.</li>
+            <li>The Company and Owner bear no liability for any injury, incident, or damage in which the voluntary consumption of alcohol, cannabis, or any impairing substance by the Guest was a contributing factor.</li>
+            <li>The Guest hereby releases, discharges, and holds harmless the Company, Owner, Ownership, and their respective officers, agents, and representatives from any and all claims, demands, losses, and liabilities of any kind arising from the Guest's presence at or use of the Property.</li>
+            <li>The Guest agrees to indemnify and defend the Company and Owner against any claim, loss, damage, or expense (including reasonable attorneys' fees) arising from the Guest's conduct, negligence, or violation of this Waiver.</li>
+          </ul>
+        </div>
       </div>
     </div>
 
     <!-- 13 -->
-    <div class="waiver-section" id="last-waiver-section">
+    <div class="waiver-section">
       <div class="waiver-section-num">Section 13</div>
       <div class="waiver-section-title">Severability</div>
-      <div class="waiver-section-body">If any provision of this Waiver is found to be invalid, unenforceable, or contrary to applicable law, that provision shall be modified to the minimum extent necessary to make it enforceable, or severed if modification is not possible. The remaining provisions shall continue in full force and effect.</div>
+      <div class="waiver-section-body">If any provision of this Waiver is found to be invalid or unenforceable, that provision shall be modified to the minimum extent necessary to make it enforceable, or severed if modification is not possible. The remaining provisions shall continue in full force and effect.</div>
+    </div>
+
+    <!-- 14 — NEW -->
+    <div class="waiver-section" id="last-waiver-section">
+      <div class="waiver-section-num">Section 14</div>
+      <div class="waiver-section-title">Confidentiality &amp; Nondisclosure</div>
+      <div class="waiver-section-body"><ul>
+        <li>The Guest acknowledges that the Property is a private facility and that other individuals present may have a reasonable expectation of privacy. The Guest agrees to respect that expectation in any content shared publicly.</li>
+        <li>The Guest shall not publish, post, or distribute any content — including photographs, video, or written descriptions — that is derogatory, defamatory, or disparaging toward the Company, the Owner, the Approved User, or any other guest or individual present at the Property.</li>
+        <li>The Guest shall not disclose private, sensitive, or personally identifying information about any other individual observed at the Property without that individual's express consent.</li>
+        <li>Any content shared publicly that violates this section may subject the Guest to liability for damages, including reputational harm. The Company reserves the right to demand immediate removal of such content.</li>
+      </ul></div>
     </div>
 
   </div>
@@ -1261,18 +840,15 @@ body::after {
 ══════════════════════════════════════ -->
 <div id="screen-sign" class="screen">
   <button class="btn-back" id="btn-sign-back">Back</button>
-
   <div class="sign-header">
     <div class="sign-header-eyebrow">Step 2 of 2 — Signature</div>
     <div class="sign-header-title">Sign<br><em>Below.</em></div>
   </div>
-
   <div class="sign-body">
     <div class="sign-name-field">
       <label class="field-label" for="guest-name">Your Full Name (Print)</label>
       <input type="text" id="guest-name" class="sign-input" placeholder="First and last name" autocomplete="off" autocorrect="off" spellcheck="false">
     </div>
-
     <div class="sign-canvas-wrap">
       <label class="field-label">Signature</label>
       <div class="canvas-container" id="canvas-container">
@@ -1285,9 +861,7 @@ body::after {
         <button class="btn-clear" id="btn-clear-sig">Clear signature</button>
       </div>
     </div>
-
     <p class="sign-agree-text">I have read, understand, and voluntarily agree to all terms of this Waiver as a condition of access to the Tiki House. I acknowledge that I am signing of my own free will.</p>
-
     <div class="sign-actions">
       <button class="btn-primary" id="btn-submit-waiver" disabled>Submit Waiver</button>
     </div>
@@ -1318,16 +892,11 @@ body::after {
       <div class="log-header-eyebrow">Session Record</div>
       <div class="log-header-title">Signed<br>Waivers.</div>
     </div>
-    <div class="log-count">
-      This Session<br>
-      <span id="log-count-num">0</span>
-    </div>
+    <div class="log-count">This Session<br><span id="log-count-num">0</span></div>
   </div>
-
   <div class="log-list" id="log-list">
     <div class="log-empty" id="log-empty">No waivers signed this session.</div>
   </div>
-
   <div class="log-footer">
     <button class="btn-primary" id="btn-new-session" style="flex:1;">← New Session</button>
   </div>
@@ -1340,11 +909,12 @@ body::after {
 const state = {
   host: '',
   arrivalDate: null,
+  departureDate: null,
+  dpSelectingStep: 'arrival', // 'arrival' | 'departure'
   guestName: '',
   hasSignature: false,
   hasScrolledWaiver: false,
-  log: [],
-  currentScreen: 'screen-landing'
+  log: []
 };
 
 // ═══════════════════════════════════════
@@ -1354,132 +924,152 @@ function goTo(screenId) {
   const current = document.querySelector('.screen.active');
   const next = document.getElementById(screenId);
   if (!next || next === current) return;
-
   if (current) {
     current.classList.add('exiting');
-    setTimeout(() => {
-      current.classList.remove('active', 'exiting');
-    }, 500);
+    setTimeout(() => current.classList.remove('active','exiting'), 500);
   }
-
-  setTimeout(() => {
-    next.classList.add('active');
-    state.currentScreen = screenId;
-  }, current ? 200 : 0);
+  setTimeout(() => next.classList.add('active'), current ? 200 : 0);
 }
 
 // ═══════════════════════════════════════
-// DATE PICKER
+// DATE RANGE PICKER
 // ═══════════════════════════════════════
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAYS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+const DAYS   = ['Su','Mo','Tu','We','Th','Fr','Sa'];
 
-let dpYear = new Date().getFullYear();
+let dpYear  = new Date().getFullYear();
 let dpMonth = new Date().getMonth();
+
+function dateKey(d) { return d ? d.toISOString().slice(0,10) : null; }
 
 function renderCalendar() {
   const label = document.getElementById('dp-month-label');
-  const grid = document.getElementById('dp-grid');
+  const grid  = document.getElementById('dp-grid');
   label.textContent = `${MONTHS[dpMonth]} ${dpYear}`;
 
-  const today = new Date();
-  today.setHours(0,0,0,0);
-
+  const today    = new Date(); today.setHours(0,0,0,0);
   const firstDay = new Date(dpYear, dpMonth, 1).getDay();
-  const daysInMonth = new Date(dpYear, dpMonth + 1, 0).getDate();
+  const daysInM  = new Date(dpYear, dpMonth + 1, 0).getDate();
+  const arrKey   = dateKey(state.arrivalDate);
+  const depKey   = dateKey(state.departureDate);
 
   let html = DAYS.map(d => `<div class="dp-day-header">${d}</div>`).join('');
+  for (let i = 0; i < firstDay; i++) html += `<div class="dp-day empty"></div>`;
 
-  for (let i = 0; i < firstDay; i++) {
-    html += `<div class="dp-day empty"></div>`;
-  }
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const date = new Date(dpYear, dpMonth, d);
-    date.setHours(0,0,0,0);
+  for (let d = 1; d <= daysInM; d++) {
+    const date = new Date(dpYear, dpMonth, d); date.setHours(0,0,0,0);
+    const key  = dateKey(date);
     const isPast = date < today;
-    const isToday = date.getTime() === today.getTime();
-    const isSelected = state.arrivalDate && date.getTime() === state.arrivalDate.getTime();
-
     let classes = 'dp-day';
-    if (isPast) classes += ' past';
-    if (isToday) classes += ' today';
-    if (isSelected) classes += ' selected';
-
-    html += `<div class="${classes}" data-date="${date.toISOString()}">${d}</div>`;
+    if (isPast) { classes += ' past'; }
+    else {
+      if (date.getTime() === today.getTime()) classes += ' today';
+      if (key === arrKey) classes += ' arrival';
+      if (key === depKey) classes += ' departure';
+      if (arrKey && depKey && key > arrKey && key < depKey) classes += ' in-range';
+    }
+    html += `<div class="${classes}" data-ts="${date.getTime()}">${d}</div>`;
   }
 
   grid.innerHTML = html;
-
-  // Attach touch/click events
   grid.querySelectorAll('.dp-day:not(.empty):not(.past)').forEach(el => {
-    el.addEventListener('click', () => {
-      state.arrivalDate = new Date(el.dataset.date);
-      document.getElementById('dp-selected-display').textContent =
-        state.arrivalDate.toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'});
-      document.getElementById('date-picker-wrap').classList.add('has-date');
-      renderCalendar();
-      checkLandingReady();
-    });
+    el.addEventListener('click', () => handleDayTap(new Date(parseInt(el.dataset.ts))));
   });
+
+  // Update display values
+  const arrVal = document.getElementById('dp-arrival-val');
+  const depVal = document.getElementById('dp-departure-val');
+  const hint   = document.getElementById('dp-step-hint');
+
+  if (state.arrivalDate) {
+    arrVal.textContent = state.arrivalDate.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    arrVal.classList.add('set');
+  } else {
+    arrVal.textContent = '—'; arrVal.classList.remove('set');
+  }
+  if (state.departureDate) {
+    depVal.textContent = state.departureDate.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    depVal.classList.add('set');
+  } else {
+    depVal.textContent = '—'; depVal.classList.remove('set');
+  }
+
+  if (!state.arrivalDate) {
+    hint.textContent = 'Tap arrival date'; hint.classList.remove('hidden');
+  } else if (!state.departureDate) {
+    hint.textContent = 'Now tap departure date'; hint.classList.remove('hidden');
+  } else {
+    hint.classList.add('hidden');
+    document.getElementById('date-picker-wrap').classList.add('has-range');
+  }
+}
+
+function handleDayTap(date) {
+  if (!state.arrivalDate || state.dpSelectingStep === 'arrival') {
+    // Set or reset arrival
+    state.arrivalDate = date;
+    state.departureDate = null;
+    state.dpSelectingStep = 'departure';
+    document.getElementById('date-picker-wrap').classList.remove('has-range');
+  } else {
+    // Setting departure
+    if (date <= state.arrivalDate) {
+      // Tapped before or on arrival — restart as new arrival
+      state.arrivalDate = date;
+      state.departureDate = null;
+      state.dpSelectingStep = 'departure';
+      document.getElementById('date-picker-wrap').classList.remove('has-range');
+    } else {
+      state.departureDate = date;
+      state.dpSelectingStep = 'arrival'; // reset for next time
+    }
+  }
+  renderCalendar();
+  checkLandingReady();
 }
 
 document.getElementById('dp-prev').addEventListener('click', () => {
-  dpMonth--;
-  if (dpMonth < 0) { dpMonth = 11; dpYear--; }
-  renderCalendar();
+  dpMonth--; if (dpMonth < 0) { dpMonth = 11; dpYear--; } renderCalendar();
 });
 document.getElementById('dp-next').addEventListener('click', () => {
-  dpMonth++;
-  if (dpMonth > 11) { dpMonth = 0; dpYear++; }
-  renderCalendar();
+  dpMonth++; if (dpMonth > 11) { dpMonth = 0; dpYear++; } renderCalendar();
 });
 
 // ═══════════════════════════════════════
-// LANDING LOGIC
+// LANDING GATE — all three required
 // ═══════════════════════════════════════
 function checkLandingReady() {
-  const ready = state.host && state.arrivalDate;
+  const ready = state.host && state.arrivalDate && state.departureDate;
   document.getElementById('btn-begin').disabled = !ready;
 }
 
 document.getElementById('host-select').addEventListener('change', function() {
-  state.host = this.value;
-  checkLandingReady();
+  state.host = this.value; checkLandingReady();
 });
 
 document.getElementById('btn-begin').addEventListener('click', () => {
-  resetWaiverScroll();
-  goTo('screen-waiver');
+  resetWaiverScroll(); goTo('screen-waiver');
 });
-
 document.getElementById('btn-view-log').addEventListener('click', () => {
-  renderLog();
-  goTo('screen-log');
+  renderLog(); goTo('screen-log');
 });
 
 // ═══════════════════════════════════════
-// WAIVER SCROLL TRACKING
+// WAIVER SCROLL
 // ═══════════════════════════════════════
 function resetWaiverScroll() {
-  const scrollArea = document.getElementById('waiver-scroll-area');
-  scrollArea.scrollTop = 0;
+  const area = document.getElementById('waiver-scroll-area');
+  area.scrollTop = 0;
   state.hasScrolledWaiver = false;
   document.getElementById('btn-to-sign').disabled = true;
   document.getElementById('scroll-hint').classList.remove('hidden');
   document.getElementById('waiver-progress-bar').style.width = '0%';
-
-  // Reveal sections via IntersectionObserver
-  const sections = document.querySelectorAll('.waiver-section');
-  sections.forEach(s => s.classList.remove('visible'));
-
+  document.querySelectorAll('.waiver-section').forEach(s => s.classList.remove('visible'));
   setTimeout(() => {
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) e.target.classList.add('visible');
-      });
-    }, { root: scrollArea, threshold: 0.1 });
-    sections.forEach(s => io.observe(s));
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { root: area, threshold: 0.1 });
+    document.querySelectorAll('.waiver-section').forEach(s => io.observe(s));
   }, 300);
 }
 
@@ -1487,172 +1077,119 @@ document.getElementById('waiver-scroll-area').addEventListener('scroll', functio
   const { scrollTop, scrollHeight, clientHeight } = this;
   const pct = Math.min(100, (scrollTop / (scrollHeight - clientHeight)) * 100);
   document.getElementById('waiver-progress-bar').style.width = pct + '%';
-
-  if (pct > 15) {
-    document.getElementById('scroll-hint').classList.add('hidden');
-  }
-
+  if (pct > 15) document.getElementById('scroll-hint').classList.add('hidden');
   if (pct > 90) {
     state.hasScrolledWaiver = true;
     document.getElementById('btn-to-sign').disabled = false;
   }
 });
 
-document.getElementById('btn-to-sign').addEventListener('click', () => {
-  goTo('screen-sign');
-});
-
-document.getElementById('btn-waiver-back').addEventListener('click', () => {
-  goTo('screen-landing');
-});
+document.getElementById('btn-to-sign').addEventListener('click', () => goTo('screen-sign'));
+document.getElementById('btn-waiver-back').addEventListener('click', () => goTo('screen-landing'));
 
 // ═══════════════════════════════════════
 // SIGNATURE CANVAS
 // ═══════════════════════════════════════
-let isDrawing = false;
-let lastX = 0, lastY = 0;
-let sigHasMark = false;
+let isDrawing = false, lastX = 0, lastY = 0, sigHasMark = false;
 const canvas = document.getElementById('sig-canvas');
 const ctx = canvas.getContext('2d');
 
 function resizeCanvas() {
-  const container = document.getElementById('canvas-container');
-  const rect = container.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = rect.width * dpr;
+  const cont = document.getElementById('canvas-container');
+  const rect = cont.getBoundingClientRect();
+  const dpr  = window.devicePixelRatio || 1;
+  canvas.width  = rect.width  * dpr;
   canvas.height = rect.height * dpr;
-  canvas.style.width = rect.width + 'px';
+  canvas.style.width  = rect.width  + 'px';
   canvas.style.height = rect.height + 'px';
   ctx.scale(dpr, dpr);
   setupCtx();
 }
-
 function setupCtx() {
   ctx.strokeStyle = 'rgba(240,232,212,0.9)';
-  ctx.lineWidth = 1.8;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.shadowColor = 'rgba(200,131,26,0.4)';
-  ctx.shadowBlur = 3;
+  ctx.lineWidth = 1.8; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.shadowColor = 'rgba(200,131,26,0.4)'; ctx.shadowBlur = 3;
 }
-
 function getPos(e) {
   const rect = canvas.getBoundingClientRect();
-  if (e.touches) {
-    return {
-      x: e.touches[0].clientX - rect.left,
-      y: e.touches[0].clientY - rect.top
-    };
-  }
+  if (e.touches) return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
   return { x: e.clientX - rect.left, y: e.clientY - rect.top };
 }
-
 function startDraw(e) {
-  e.preventDefault();
-  isDrawing = true;
-  const pos = getPos(e);
-  lastX = pos.x;
-  lastY = pos.y;
-  ctx.beginPath();
-  ctx.arc(pos.x, pos.y, 0.9, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(240,232,212,0.9)';
-  ctx.fill();
+  e.preventDefault(); isDrawing = true;
+  const p = getPos(e); lastX = p.x; lastY = p.y;
+  ctx.beginPath(); ctx.arc(p.x, p.y, 0.9, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(240,232,212,0.9)'; ctx.fill();
 }
-
 function draw(e) {
-  if (!isDrawing) return;
-  e.preventDefault();
-  const pos = getPos(e);
-  ctx.beginPath();
-  ctx.moveTo(lastX, lastY);
-  ctx.lineTo(pos.x, pos.y);
-  ctx.stroke();
-  lastX = pos.x;
-  lastY = pos.y;
-
+  if (!isDrawing) return; e.preventDefault();
+  const p = getPos(e);
+  ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(p.x, p.y); ctx.stroke();
+  lastX = p.x; lastY = p.y;
   if (!sigHasMark) {
-    sigHasMark = true;
-    state.hasSignature = true;
+    sigHasMark = true; state.hasSignature = true;
     document.getElementById('canvas-hint').style.opacity = '0';
     document.getElementById('canvas-container').classList.add('has-sig');
     checkSubmitReady();
   }
 }
-
 function endDraw() { isDrawing = false; }
 
 canvas.addEventListener('mousedown', startDraw);
 canvas.addEventListener('mousemove', draw);
 canvas.addEventListener('mouseup', endDraw);
 canvas.addEventListener('touchstart', startDraw, { passive: false });
-canvas.addEventListener('touchmove', draw, { passive: false });
-canvas.addEventListener('touchend', endDraw);
+canvas.addEventListener('touchmove',  draw,       { passive: false });
+canvas.addEventListener('touchend',   endDraw);
+canvas.addEventListener('contextmenu', e => e.preventDefault());
 
 document.getElementById('btn-clear-sig').addEventListener('click', () => {
-  const container = document.getElementById('canvas-container');
-  const rect = container.getBoundingClientRect();
-  ctx.clearRect(0, 0, rect.width, rect.height);
-  sigHasMark = false;
-  state.hasSignature = false;
+  const cont = document.getElementById('canvas-container');
+  const rect = cont.getBoundingClientRect();
+  ctx.clearRect(0, 0, rect.width * (window.devicePixelRatio||1), rect.height * (window.devicePixelRatio||1));
+  sigHasMark = false; state.hasSignature = false;
   document.getElementById('canvas-hint').style.opacity = '1';
-  document.getElementById('canvas-container').classList.remove('has-sig');
-  checkSubmitReady();
+  cont.classList.remove('has-sig'); checkSubmitReady();
 });
 
 document.getElementById('guest-name').addEventListener('input', function() {
-  state.guestName = this.value.trim();
-  checkSubmitReady();
+  state.guestName = this.value.trim(); checkSubmitReady();
 });
-
 function checkSubmitReady() {
-  const ready = state.guestName.length > 2 && state.hasSignature;
-  document.getElementById('btn-submit-waiver').disabled = !ready;
+  document.getElementById('btn-submit-waiver').disabled = !(state.guestName.length > 2 && state.hasSignature);
 }
-
-document.getElementById('btn-sign-back').addEventListener('click', () => {
-  goTo('screen-waiver');
-});
+document.getElementById('btn-sign-back').addEventListener('click', () => goTo('screen-waiver'));
 
 // ═══════════════════════════════════════
-// SUBMIT WAIVER
+// SUBMIT
 // ═══════════════════════════════════════
 document.getElementById('btn-submit-waiver').addEventListener('click', () => {
-  const entry = {
+  const fmt = d => d ? d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '?';
+  state.log.unshift({
     name: state.guestName,
     host: state.host,
-    date: state.arrivalDate ? state.arrivalDate.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '—',
-    timestamp: new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'})
-  };
-  state.log.unshift(entry);
-
+    dates: `${fmt(state.arrivalDate)} – ${fmt(state.departureDate)}`,
+    timestamp: new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})
+  });
   document.getElementById('confirm-name').textContent = state.guestName.toUpperCase();
   goTo('screen-confirm');
 });
 
 // ═══════════════════════════════════════
-// CONFIRM ACTIONS
+// CONFIRM
 // ═══════════════════════════════════════
 document.getElementById('btn-next-guest').addEventListener('click', () => {
-  // Reset signature
-  state.guestName = '';
-  state.hasSignature = false;
-  sigHasMark = false;
+  state.guestName = ''; state.hasSignature = false; sigHasMark = false;
   document.getElementById('guest-name').value = '';
-  const container = document.getElementById('canvas-container');
-  const rect = container.getBoundingClientRect();
-  ctx.clearRect(0, 0, rect.width * (window.devicePixelRatio||1), rect.height * (window.devicePixelRatio||1));
+  const cont = document.getElementById('canvas-container');
+  const rect = cont.getBoundingClientRect();
+  ctx.clearRect(0, 0, rect.width*(window.devicePixelRatio||1), rect.height*(window.devicePixelRatio||1));
   document.getElementById('canvas-hint').style.opacity = '1';
-  container.classList.remove('has-sig');
+  cont.classList.remove('has-sig');
   document.getElementById('btn-submit-waiver').disabled = true;
-
-  resetWaiverScroll();
-  goTo('screen-waiver');
+  resetWaiverScroll(); goTo('screen-waiver');
 });
-
-document.getElementById('btn-done-view-log').addEventListener('click', () => {
-  renderLog();
-  goTo('screen-log');
-});
+document.getElementById('btn-done-view-log').addEventListener('click', () => { renderLog(); goTo('screen-log'); });
 
 // ═══════════════════════════════════════
 // LOG
@@ -1660,82 +1197,38 @@ document.getElementById('btn-done-view-log').addEventListener('click', () => {
 function renderLog() {
   const list = document.getElementById('log-list');
   const empty = document.getElementById('log-empty');
-  const countEl = document.getElementById('log-count-num');
-
-  countEl.textContent = state.log.length;
-
-  if (state.log.length === 0) {
-    empty.style.display = 'block';
-    // Remove old entries
-    list.querySelectorAll('.log-entry').forEach(e => e.remove());
-    return;
-  }
-
-  empty.style.display = 'none';
-  list.querySelectorAll('.log-entry').forEach(e => e.remove());
-
+  document.getElementById('log-count-num').textContent = state.log.length;
+  if (!state.log.length) { empty.style.display = 'block'; list.querySelectorAll('.log-entry').forEach(e=>e.remove()); return; }
+  empty.style.display = 'none'; list.querySelectorAll('.log-entry').forEach(e=>e.remove());
   state.log.forEach((entry, i) => {
     const div = document.createElement('div');
-    div.className = 'log-entry';
-    div.style.animationDelay = (i * 0.05) + 's';
-    div.innerHTML = `
-      <div>
-        <div class="log-name">${entry.name}</div>
-        <div class="log-meta">${entry.host} · ${entry.date} · ${entry.timestamp}</div>
-      </div>
-      <div class="log-badge">Signed</div>
-    `;
+    div.className = 'log-entry'; div.style.animationDelay = (i*0.05)+'s';
+    div.innerHTML = `<div><div class="log-name">${entry.name}</div><div class="log-meta">${entry.host} · ${entry.dates} · ${entry.timestamp}</div></div><div class="log-badge">Signed</div>`;
     list.appendChild(div);
   });
 }
-
 document.getElementById('btn-new-session').addEventListener('click', () => {
-  // Full reset
-  state.host = '';
-  state.arrivalDate = null;
-  state.guestName = '';
-  state.hasSignature = false;
-  state.log = [];
+  state.host = ''; state.arrivalDate = null; state.departureDate = null;
+  state.guestName = ''; state.hasSignature = false; state.log = [];
+  state.dpSelectingStep = 'arrival';
   document.getElementById('host-select').value = '';
-  document.getElementById('dp-selected-display').textContent = 'Tap your arrival date';
-  document.getElementById('date-picker-wrap').classList.remove('has-date');
+  document.getElementById('date-picker-wrap').classList.remove('has-range');
   document.getElementById('btn-begin').disabled = true;
-  dpMonth = new Date().getMonth();
-  dpYear = new Date().getFullYear();
-  renderCalendar();
-  goTo('screen-landing');
+  dpMonth = new Date().getMonth(); dpYear = new Date().getFullYear();
+  renderCalendar(); goTo('screen-landing');
 });
-
-// ═══════════════════════════════════════
-// TOAST
-// ═══════════════════════════════════════
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
 
 // ═══════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════
 window.addEventListener('load', () => {
   renderCalendar();
-  // Resize canvas after layout settles
   setTimeout(resizeCanvas, 400);
 });
-
 window.addEventListener('resize', resizeCanvas);
-
-// Prevent iOS bounce scroll
-document.addEventListener('touchmove', (e) => {
-  if (!e.target.closest('.waiver-scroll-area, .sign-body, .log-list')) {
-    e.preventDefault();
-  }
+document.addEventListener('touchmove', e => {
+  if (!e.target.closest('.waiver-scroll-area,.sign-body,.log-list,#screen-landing')) e.preventDefault();
 }, { passive: false });
-
-// Prevent context menu on canvas
-canvas.addEventListener('contextmenu', e => e.preventDefault());
 </script>
 </body>
 </html>
