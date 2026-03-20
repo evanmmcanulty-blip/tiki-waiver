@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Tiki House Guest Check-In</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&family=Archivo+Narrow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 
@@ -295,6 +296,7 @@ body::after {
 .waiver-header-eyebrow {
   font-family: var(--font-label); font-size: 8px; letter-spacing: 0.38em;
   text-transform: uppercase; color: var(--amber); margin-bottom: 10px;
+  padding-left: 80px; /* clear the back button */
 }
 .waiver-header-title {
   font-family: var(--font-display); font-size: 28px; font-weight: 700;
@@ -404,6 +406,7 @@ body::after {
 .sign-header-eyebrow {
   font-family: var(--font-label); font-size: 8px; letter-spacing: 0.38em;
   text-transform: uppercase; color: var(--amber); margin-bottom: 8px;
+  padding-left: 80px; /* clear the back button */
 }
 .sign-header-title {
   font-family: var(--font-display); font-size: 26px; font-weight: 700;
@@ -551,6 +554,18 @@ body::after {
 }
 .tiki-mark::before { content: ''; width: 9px; height: 9px; background: var(--amber); border-radius: 50%; }
 .tiki-mark::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 1px solid var(--rule); }
+
+/* ── EMAIL STATUS ── */
+.confirm-email-status {
+  font-family: var(--font-label); font-size: 9px; letter-spacing: 0.22em;
+  text-transform: uppercase; padding: 8px 16px; border-radius: var(--radius);
+  border: 1px solid var(--rule); color: var(--cream-mute);
+  transition: color 0.3s, border-color 0.3s;
+  opacity: 0; transition: opacity 0.4s ease;
+}
+#screen-confirm.active .confirm-email-status { opacity: 1; transition-delay: 0.65s; }
+.confirm-email-status.sent   { color: #5a9e6f; border-color: rgba(90,158,111,0.4); }
+.confirm-email-status.failed { color: #c0503a; border-color: rgba(192,80,58,0.4); }
 
 /* ── TOAST ── */
 .toast {
@@ -877,6 +892,7 @@ body::after {
   <div class="confirm-name" id="confirm-name"></div>
   <div class="confirm-rule"></div>
   <p class="confirm-sub">Your entry has been recorded for this session. Welcome to the Tiki House.</p>
+  <p class="confirm-email-status" id="confirm-email-status">Sending record…</p>
   <div class="confirm-actions">
     <button class="btn-primary" id="btn-next-guest">Next Guest →</button>
     <button class="btn-ghost" id="btn-done-view-log">All Done — View Log</button>
@@ -1161,18 +1177,102 @@ function checkSubmitReady() {
 document.getElementById('btn-sign-back').addEventListener('click', () => goTo('screen-waiver'));
 
 // ═══════════════════════════════════════
+// EMAILJS CONFIG
+// ═══════════════════════════════════════
+const EMAILJS_PUBLIC_KEY  = 'htbLz3cS-R-U5fONO';
+const EMAILJS_SERVICE_ID  = 'service_irr91tj';
+const EMAILJS_TEMPLATE_ID = 'template_qvqz4u5';
+const RECIPIENT_EMAIL     = 'emcanulty@allprorecon.com';
+
+// Sheet logging — paste your deployed Apps Script URL here
+const SHEET_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwUfg3dKhIOWrhBFzfYu8RtHo8tZTdkf-tnRevhA6sv2DxoO2zcasTorKeyK8R7i9JXXQ/exec';
+const WAIVER_VERSION = 'v2'; // Increment this when waiver terms change
+
+emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+
+// ═══════════════════════════════════════
 // SUBMIT
 // ═══════════════════════════════════════
-document.getElementById('btn-submit-waiver').addEventListener('click', () => {
-  const fmt = d => d ? d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '?';
-  state.log.unshift({
+document.getElementById('btn-submit-waiver').addEventListener('click', async () => {
+  const fmt = d => d ? d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : '?';
+  const visitDates = `${fmt(state.arrivalDate)} – ${fmt(state.departureDate)}`;
+  const timestamp  = new Date().toLocaleString('en-US',{
+    month:'long', day:'numeric', year:'numeric',
+    hour:'numeric', minute:'2-digit', timeZoneName:'short'
+  });
+
+  // Compress signature to stay under EmailJS 50kb variable limit
+  const offscreen = document.createElement('canvas');
+  offscreen.width = 300; offscreen.height = 90;
+  const offCtx = offscreen.getContext('2d');
+  offCtx.fillStyle = '#ffffff';
+  offCtx.fillRect(0, 0, 300, 90);
+  const dpr = window.devicePixelRatio || 1;
+  offCtx.drawImage(canvas, 0, 0, canvas.width / dpr * dpr, canvas.height / dpr * dpr, 0, 0, 300, 90);
+  const sigDataURL = offscreen.toDataURL('image/jpeg', 0.5);
+  const sigImgTag  = `<img src="${sigDataURL}" alt="Guest signature" style="max-width:100%;display:block;">`;
+
+  const entry = {
     name: state.guestName,
     host: state.host,
-    dates: `${fmt(state.arrivalDate)} – ${fmt(state.departureDate)}`,
-    timestamp: new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})
-  });
+    dates: visitDates,
+    timestamp: new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),
+    emailStatus: 'sending'
+  };
+  state.log.unshift(entry);
+
   document.getElementById('confirm-name').textContent = state.guestName.toUpperCase();
+  const statusEl = document.getElementById('confirm-email-status');
+  statusEl.textContent = 'Sending record…';
+  statusEl.className = 'confirm-email-status';
   goTo('screen-confirm');
+
+  // Small yield to let the screen transition paint before firing network requests
+  await new Promise(r => setTimeout(r, 50));
+
+  // Fire email and sheet log in parallel
+  const emailPromise = emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    to_email:       RECIPIENT_EMAIL,
+    guest_name:     state.guestName,
+    host_name:      state.host,
+    visit_dates:    visitDates,
+    timestamp:      timestamp,
+    waiver_version: WAIVER_VERSION,
+    signature_img:  sigImgTag,
+  });
+
+  // no-cors required for Google Apps Script from GitHub Pages
+  const sheetPromise = SHEET_ENDPOINT !== 'PASTE_YOUR_APPS_SCRIPT_URL_HERE'
+    ? fetch(SHEET_ENDPOINT, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify({
+          guest_name:     state.guestName,
+          host_name:      state.host,
+          arrival_date:   fmt(state.arrivalDate),
+          departure_date: fmt(state.departureDate),
+          signed_at:      timestamp,
+          waiver_version: WAIVER_VERSION,
+          email_status:   'pending',
+        })
+      })
+    : Promise.resolve();
+
+  try {
+    await emailPromise;
+    statusEl.textContent = '✓ Record sent';
+    statusEl.className   = 'confirm-email-status sent';
+    entry.emailStatus    = 'sent';
+  } catch (err) {
+    console.error('EmailJS error:', err);
+    const msg = err?.text || err?.message || JSON.stringify(err) || 'Unknown error';
+    statusEl.textContent = `⚠ Email failed: ${msg}`;
+    statusEl.className   = 'confirm-email-status failed';
+    entry.emailStatus    = 'failed';
+  }
+
+  // Sheet logging is best-effort — don't surface errors to the guest
+  sheetPromise.catch(err => console.warn('Sheet log failed:', err));
 });
 
 // ═══════════════════════════════════════
@@ -1203,7 +1303,7 @@ function renderLog() {
   state.log.forEach((entry, i) => {
     const div = document.createElement('div');
     div.className = 'log-entry'; div.style.animationDelay = (i*0.05)+'s';
-    div.innerHTML = `<div><div class="log-name">${entry.name}</div><div class="log-meta">${entry.host} · ${entry.dates} · ${entry.timestamp}</div></div><div class="log-badge">Signed</div>`;
+    div.innerHTML = `<div><div class="log-name">${entry.name}</div><div class="log-meta">${entry.host} · ${entry.dates} · ${entry.timestamp}</div></div><div class="log-badge">${entry.emailStatus === 'sent' ? '✓ Sent' : entry.emailStatus === 'failed' ? '⚠ Failed' : 'Signed'}</div>`;
     list.appendChild(div);
   });
 }
