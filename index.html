@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.emailjs.com https://script.google.com https://script.googleusercontent.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self';">
 <title>Tiki House Guest Check-In</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&family=Archivo+Narrow:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -650,6 +652,7 @@ body::after {
 
   <div class="form-section">
     <div class="carry-forward" id="carry-forward" role="status" aria-live="polite"></div>
+    <input type="text" id="hp-website" name="website" autocomplete="off" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;">
     <div class="field-group">
       <label class="field-label" for="host-select">Approved User (Host)</label>
       <select id="host-select" class="field-select">
@@ -883,8 +886,8 @@ body::after {
       <div class="waiver-section-body">If any provision of this Waiver is found to be invalid or unenforceable, that provision shall be modified to the minimum extent necessary to make it enforceable, or severed if modification is not possible. The remaining provisions shall continue in full force and effect.</div>
     </div>
 
-    <!-- 14 — NEW -->
-    <div class="waiver-section" id="last-waiver-section">
+    <!-- 14 -->
+    <div class="waiver-section">
       <div class="waiver-section-num">Section 14</div>
       <div class="waiver-section-title">Confidentiality &amp; Nondisclosure</div>
       <div class="waiver-section-body"><ul>
@@ -893,6 +896,15 @@ body::after {
         <li>The Guest shall not disclose private, sensitive, or personally identifying information about any other individual observed at the Property without that individual's express consent.</li>
         <li>Any content shared publicly that violates this section may subject the Guest to liability for damages, including reputational harm. The Company reserves the right to demand immediate removal of such content.</li>
       </ul></div>
+    </div>
+
+    <!-- 15 -->
+    <div class="waiver-section" id="last-waiver-section">
+      <div class="waiver-section-num">Section 15</div>
+      <div class="waiver-section-title">Record Storage</div>
+      <div class="waiver-section-body">
+        The Guest acknowledges that this Waiver, including the Guest's name and signature image, is recorded for compliance purposes and transmitted through third-party services — currently EmailJS and Google Workspace — for record-keeping and operational notification. The Company shall protect such records with reasonable security and shall not share them outside the parties identified in this Waiver except as required by law.
+      </div>
     </div>
 
   </div>
@@ -945,7 +957,8 @@ body::after {
   <div class="confirm-name" id="confirm-name"></div>
   <div class="confirm-rule"></div>
   <p class="confirm-sub">Your entry has been recorded for this session. Welcome to the Tiki House.</p>
-  <p class="confirm-email-status" id="confirm-email-status">Sending record…</p>
+  <p class="confirm-email-status" id="confirm-email-status">Sending email…</p>
+  <p class="confirm-email-status" id="confirm-sheet-status" style="margin-top:8px;">Logging…</p>
   <div class="confirm-actions">
     <button class="btn-primary" id="btn-next-guest">Next Guest →</button>
     <button class="btn-ghost" id="btn-done-view-log">All Done — View Log</button>
@@ -983,8 +996,12 @@ const state = {
   guestName: '',
   hasSignature: false,
   hasScrolledWaiver: false,
-  log: []
+  log: [],
+  lastSubmittedAt: 0,
+  isSubmitting: false
 };
+
+const SUBMIT_COOLDOWN_MS = 15000;
 
 // ═══════════════════════════════════════
 // SCREEN TRANSITIONS
@@ -998,6 +1015,19 @@ function goTo(screenId) {
     setTimeout(() => current.classList.remove('active','exiting'), 500);
   }
   setTimeout(() => next.classList.add('active'), current ? 200 : 0);
+}
+
+// ═══════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════
+let toastTimer = null;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
 }
 
 // ═══════════════════════════════════════
@@ -1300,7 +1330,11 @@ const RECIPIENT_EMAIL     = 'emcanulty@allprorecon.com';
 
 // Sheet logging — paste your deployed Apps Script URL here
 const SHEET_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwUfg3dKhIOWrhBFzfYu8RtHo8tZTdkf-tnRevhA6sv2DxoO2zcasTorKeyK8R7i9JXXQ/exec';
-const WAIVER_VERSION = 'v2'; // Increment this when waiver terms change
+// Shared validator string. Not a true secret (visible in client source) but stops
+// drive-by abuse — the Apps Script doPost rejects any submission missing this exact
+// value. Rotate by changing this constant + the matching one in apps-script.gs.
+const KIOSK_TOKEN = 'kiosk_2026_a3f8e1d7c4b2';
+const WAIVER_VERSION = 'v3'; // Increment this when waiver terms change
 
 emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
 
@@ -1308,6 +1342,23 @@ emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
 // SUBMIT
 // ═══════════════════════════════════════
 document.getElementById('btn-submit-waiver').addEventListener('click', async () => {
+  // Honeypot — bots fill every field. Real guests cannot tab to or see this input.
+  const honeypot = document.getElementById('hp-website');
+  if (honeypot && honeypot.value) { return; }
+
+  // Concurrency + cooldown guard.
+  if (state.isSubmitting) { return; }
+  const now = Date.now();
+  if (now - state.lastSubmittedAt < SUBMIT_COOLDOWN_MS) {
+    showToast('Kiosk is processing — please wait');
+    return;
+  }
+  state.isSubmitting = true;
+  state.lastSubmittedAt = now;
+
+  const submitBtn = document.getElementById('btn-submit-waiver');
+  submitBtn.disabled = true;
+
   const fmt = d => d ? d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : '?';
   const visitDates = `${fmt(state.arrivalDate)} – ${fmt(state.departureDate)}`;
   const timestamp  = new Date().toLocaleString('en-US',{
@@ -1315,15 +1366,20 @@ document.getElementById('btn-submit-waiver').addEventListener('click', async () 
     hour:'numeric', minute:'2-digit', timeZoneName:'short'
   });
 
-  // Compress signature to stay under EmailJS 50kb variable limit
+  // Render signature to a higher-fidelity PNG. PNG run-length compresses sparse pen
+  // strokes well, so this typically lands well under EmailJS's 50KB variable limit
+  // while preserving the strokes the prior 300x90 q0.5 JPEG was eating.
   const offscreen = document.createElement('canvas');
-  offscreen.width = 300; offscreen.height = 90;
+  offscreen.width = 480; offscreen.height = 144;
   const offCtx = offscreen.getContext('2d');
   offCtx.fillStyle = '#ffffff';
-  offCtx.fillRect(0, 0, 300, 90);
-  const dpr = window.devicePixelRatio || 1;
-  offCtx.drawImage(canvas, 0, 0, canvas.width / dpr * dpr, canvas.height / dpr * dpr, 0, 0, 300, 90);
-  const sigDataURL = offscreen.toDataURL('image/jpeg', 0.5);
+  offCtx.fillRect(0, 0, offscreen.width, offscreen.height);
+  offCtx.drawImage(canvas, 0, 0, offscreen.width, offscreen.height);
+  let sigDataURL = offscreen.toDataURL('image/png');
+  if (sigDataURL.length > 48000) {
+    // Fallback: lossy but still well above the prior fidelity.
+    sigDataURL = offscreen.toDataURL('image/jpeg', 0.85);
+  }
   const sigImgTag  = `<img src="${sigDataURL}" alt="Guest signature" style="max-width:100%;display:block;">`;
 
   const entry = {
@@ -1336,9 +1392,12 @@ document.getElementById('btn-submit-waiver').addEventListener('click', async () 
   state.log.unshift(entry);
 
   document.getElementById('confirm-name').textContent = state.guestName.toUpperCase();
-  const statusEl = document.getElementById('confirm-email-status');
-  statusEl.textContent = 'Sending record…';
-  statusEl.className = 'confirm-email-status';
+  const emailStatusEl = document.getElementById('confirm-email-status');
+  const sheetStatusEl = document.getElementById('confirm-sheet-status');
+  emailStatusEl.textContent = 'Sending email…';
+  emailStatusEl.className = 'confirm-email-status';
+  sheetStatusEl.textContent = 'Logging…';
+  sheetStatusEl.className = 'confirm-email-status';
   goTo('screen-confirm');
 
   // Small yield to let the screen transition paint before firing network requests
@@ -1355,12 +1414,16 @@ document.getElementById('btn-submit-waiver').addEventListener('click', async () 
     signature_img:  sigImgTag,
   });
 
-  // no-cors required for Google Apps Script from GitHub Pages
+  // no-cors required for Google Apps Script from GitHub Pages.
+  // Trade-off: response is opaque, so we can only detect network/transport failure,
+  // not server-side rejection. For canonical record assurance, rely on the daily
+  // self-check trigger configured in apps-script.gs (see Hardening Record).
   const sheetPromise = SHEET_ENDPOINT !== 'PASTE_YOUR_APPS_SCRIPT_URL_HERE'
     ? fetch(SHEET_ENDPOINT, {
         method: 'POST',
         mode: 'no-cors',
         body: JSON.stringify({
+          kiosk_token:    KIOSK_TOKEN,
           guest_name:     state.guestName,
           host_name:      state.host,
           arrival_date:   fmt(state.arrivalDate),
@@ -1374,19 +1437,29 @@ document.getElementById('btn-submit-waiver').addEventListener('click', async () 
 
   try {
     await emailPromise;
-    statusEl.textContent = '✓ Record sent';
-    statusEl.className   = 'confirm-email-status sent';
+    emailStatusEl.textContent = '✓ Email sent';
+    emailStatusEl.className   = 'confirm-email-status sent';
     entry.emailStatus    = 'sent';
   } catch (err) {
     console.error('EmailJS error:', err);
-    const msg = err?.text || err?.message || JSON.stringify(err) || 'Unknown error';
-    statusEl.textContent = `⚠ Email failed: ${msg}`;
-    statusEl.className   = 'confirm-email-status failed';
+    const msg = err && (err.text || err.message) ? (err.text || err.message) : 'send failed';
+    emailStatusEl.textContent = `⚠ Email failed — ${msg}`;
+    emailStatusEl.className   = 'confirm-email-status failed';
     entry.emailStatus    = 'failed';
   }
 
-  // Sheet logging is best-effort — don't surface errors to the guest
-  sheetPromise.catch(err => console.warn('Sheet log failed:', err));
+  // Sheet logging now surfaces transport failures to the operator.
+  try {
+    await sheetPromise;
+    sheetStatusEl.textContent = '✓ Logged';
+    sheetStatusEl.className   = 'confirm-email-status sent';
+  } catch (err) {
+    console.warn('Sheet log failed:', err);
+    sheetStatusEl.textContent = '⚠ Sheet log failed — check connection';
+    sheetStatusEl.className   = 'confirm-email-status failed';
+  }
+
+  state.isSubmitting = false;
 });
 
 // ═══════════════════════════════════════
@@ -1418,7 +1491,23 @@ function renderLog() {
   state.log.forEach((entry, i) => {
     const div = document.createElement('div');
     div.className = 'log-entry'; div.style.animationDelay = (i*0.05)+'s';
-    div.innerHTML = `<div><div class="log-name">${entry.name}</div><div class="log-meta">${entry.host} · ${entry.dates} · ${entry.timestamp}</div></div><div class="log-badge">${entry.emailStatus === 'sent' ? '✓ Sent' : entry.emailStatus === 'failed' ? '⚠ Failed' : 'Signed'}</div>`;
+
+    const left = document.createElement('div');
+    const nameEl = document.createElement('div');
+    nameEl.className = 'log-name';
+    nameEl.textContent = entry.name;
+    const metaEl = document.createElement('div');
+    metaEl.className = 'log-meta';
+    metaEl.textContent = `${entry.host} · ${entry.dates} · ${entry.timestamp}`;
+    left.appendChild(nameEl); left.appendChild(metaEl);
+
+    const badge = document.createElement('div');
+    badge.className = 'log-badge';
+    badge.textContent = entry.emailStatus === 'sent' ? '✓ Sent'
+                      : entry.emailStatus === 'failed' ? '⚠ Failed'
+                      : 'Signed';
+
+    div.appendChild(left); div.appendChild(badge);
     list.appendChild(div);
   });
 }
